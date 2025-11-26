@@ -1,5 +1,5 @@
 {
-    "name": "hawktui",
+    "name": "aws-tui",
     "version": "0.0.1",
     "description": "",
     "main": "index.tsx",
