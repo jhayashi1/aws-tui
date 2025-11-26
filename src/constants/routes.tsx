@@ -1,6 +1,8 @@
 import {Box, Text, useInput} from 'ink';
 import React, {type FC} from 'react';
 
+import {EC2Screen} from '../components/EC2Screen.js';
+import {LambdaScreen} from '../components/LambdaScreen.js';
 import {S3Screen} from '../components/S3Screen.js';
 import {theme} from '../theme.js';
 
@@ -58,11 +60,11 @@ export const ROUTES: Record<ScreenName, FC<any>> = {
     CloudFront   : ComingSoon,
     CloudWatch   : ComingSoon,
     DynamoDB     : ComingSoon,
-    EC2          : ComingSoon,
+    EC2          : EC2Screen,
     ECS          : ComingSoon,
     EKS          : ComingSoon,
     IAM          : ComingSoon,
-    Lambda       : ComingSoon,
+    Lambda       : LambdaScreen,
     RDS          : ComingSoon,
     'Route 53'   : ComingSoon,
     S3           : S3Screen,
