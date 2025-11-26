@@ -10,44 +10,19 @@ import React, {type FC, useCallback, useState} from 'react';
 
 import {useCachedResource} from '../hooks/useCachedResource.js';
 import {theme} from '../theme.js';
+import {type ServiceScreenProps} from '../types/common.js';
+import {type LambdaFunction} from '../types/resources.js';
+import {formatBytes, getAwsRegion} from '../utils/aws.js';
 import {ResourceListScreen} from './ResourceListScreen.js';
 
-interface LambdaFunction {
-    description?: string;
-    id: string;
-    name: string;
-    runtime?: string;
-}
-
-interface LambdaScreenProps {
-    cachedData?: {data: LambdaFunction[]; error: null | string; loaded: boolean};
-    onBack?: () => void;
-    onDataLoaded?: (data: {data: LambdaFunction[]; error: null | string; loaded: boolean}) => void;
-}
-
-const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
-};
+type LambdaScreenProps = ServiceScreenProps<LambdaFunction>;
 
 export const LambdaScreen: FC<LambdaScreenProps> = ({cachedData, onBack, onDataLoaded}) => {
-    const [functionMetadata, setFunctionMetadata] = useState<Record<string, {
-        architectures?: string[];
-        codeSize?: number;
-        environment?: Record<string, string>;
-        handler?: string;
-        lastModified?: string;
-        memorySize?: number;
-        tags?: Record<string, string>;
-        timeout?: number;
-    }>>({});
+    const [functions, setFunctions] = useState<LambdaFunction[]>(cachedData?.data || []);
 
     const fetchFunctions = useCallback(async (): Promise<LambdaFunction[]> => {
         const lambdaClient = new LambdaClient({
-            region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
+            region: getAwsRegion(),
         });
 
         const command = new ListFunctionsCommand({});
@@ -62,18 +37,23 @@ export const LambdaScreen: FC<LambdaScreenProps> = ({cachedData, onBack, onDataL
         }));
     }, []);
 
-    const {data: functions, error, loading} = useCachedResource({
+    const {error, loading} = useCachedResource({
         cachedData,
-        fetchData: fetchFunctions,
-        onDataLoaded,
+        fetchData   : fetchFunctions,
+        onDataLoaded: (data) => {
+            setFunctions(data.data);
+            onDataLoaded?.(data);
+        },
     });
 
     const fetchFunctionMetadata = useCallback(async (functionName: string): Promise<void> => {
-        if (functionMetadata[functionName]) return;
+        // Check if metadata already exists
+        const func = functions.find(f => f.name === functionName);
+        if (func?.handler !== undefined) return;
 
         try {
             const lambdaClient = new LambdaClient({
-                region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
+                region: getAwsRegion(),
             });
 
             const [functionResponse, tagsResponse] = await Promise.allSettled([
@@ -106,23 +86,18 @@ export const LambdaScreen: FC<LambdaScreenProps> = ({cachedData, onBack, onDataL
                 ? tagsResponse.value.Tags
                 : undefined;
 
-            setFunctionMetadata(prev => ({
-                ...prev,
-                [functionName]: {
-                    architectures,
-                    codeSize,
-                    environment,
-                    handler,
-                    lastModified,
-                    memorySize,
-                    tags,
-                    timeout,
-                },
-            }));
+            // Update the function in the list with metadata
+            const updatedFunctions = functions.map(f =>
+                f.name === functionName
+                    ? {...f, architectures, codeSize, environment, handler, lastModified, memorySize, tags, timeout}
+                    : f
+            );
+            setFunctions(updatedFunctions);
+            onDataLoaded?.({data: updatedFunctions, error: null, loaded: true});
         } catch {
             // Silently fail metadata fetch
         }
-    }, [functionMetadata]);
+    }, [functions, onDataLoaded]);
 
     return (
         <ResourceListScreen
@@ -152,7 +127,7 @@ export const LambdaScreen: FC<LambdaScreenProps> = ({cachedData, onBack, onDataL
                 );
             }}
             renderMetadata={(func) => {
-                const metadata = functionMetadata[func.name];
+                const hasMetadata = func.handler !== undefined;
 
                 return (
                     <Box flexDirection='column'>
@@ -172,78 +147,78 @@ export const LambdaScreen: FC<LambdaScreenProps> = ({cachedData, onBack, onDataL
                                 {func.runtime}
                             </Text>
                         )}
-                        {metadata ? (
+                        {hasMetadata ? (
                             <>
-                                {metadata.handler && (
+                                {func.handler && (
                                     <Text>
                                         <Text dimColor>Handler: </Text>
-                                        {metadata.handler}
+                                        {func.handler}
                                     </Text>
                                 )}
-                                {metadata.memorySize && (
+                                {func.memorySize && (
                                     <Text>
                                         <Text dimColor>Memory: </Text>
-                                        {metadata.memorySize} MB
+                                        {func.memorySize} MB
                                     </Text>
                                 )}
-                                {metadata.timeout && (
+                                {func.timeout && (
                                     <Text>
                                         <Text dimColor>Timeout: </Text>
-                                        {metadata.timeout} seconds
+                                        {func.timeout} seconds
                                     </Text>
                                 )}
-                                {metadata.codeSize && (
+                                {func.codeSize && (
                                     <Text>
                                         <Text dimColor>Code Size: </Text>
-                                        {formatBytes(metadata.codeSize)}
+                                        {formatBytes(func.codeSize)}
                                     </Text>
                                 )}
-                                {metadata.architectures && metadata.architectures.length > 0 && (
+                                {func.architectures && func.architectures.length > 0 && (
                                     <Text>
                                         <Text dimColor>Architecture: </Text>
-                                        {metadata.architectures.join(', ')}
+                                        {func.architectures.join(', ')}
                                     </Text>
                                 )}
-                                {metadata.lastModified && (
+                                {func.lastModified && (
                                     <Text>
                                         <Text dimColor>Last Modified: </Text>
-                                        {new Date(metadata.lastModified).toLocaleString()}
+                                        {new Date(func.lastModified).toLocaleString()}
                                     </Text>
                                 )}
-                                {metadata.environment && Object.keys(metadata.environment).length > 0 && (
+                                {func.environment && Object.keys(func.environment).length > 0 && (
                                     <Box
                                         flexDirection='column'
                                         marginTop={1}
                                     >
                                         <Text dimColor>Environment Variables:</Text>
-                                        {Object.entries(metadata.environment).slice(0, 5).map(([key, value]) => (
+                                        {Object.entries(func.environment).slice(0, 5).map(([key, value]) => (
                                             <Text key={key}>
                                                 {'  '}
                                                 <Text color={theme.colors.highlight}>{key}</Text>
                                                 {': '}
-                                                {value.length > 50 ? `${value.slice(0, 50)}...` : value}
+                                                {String(value).length > 50 ? `${String(value).slice(0, 50)}...` : String(value)}
                                             </Text>
                                         ))}
-                                        {Object.keys(metadata.environment).length > 5 && (
+                                        {Object.keys(func.environment).length > 5 && (
                                             <Text dimColor>
                                                 {'  '}
-                                                ... and {Object.keys(metadata.environment).length - 5} more
+                                                ... and {Object.keys(func.environment).length - 5} more
                                             </Text>
                                         )}
                                     </Box>
                                 )}
-                                {metadata.tags && Object.keys(metadata.tags).length > 0 && (
+                                {func.tags && Object.keys(func.tags).length > 0 && (
                                     <Box
                                         flexDirection='column'
                                         marginTop={1}
                                     >
                                         <Text dimColor>Tags:</Text>
-                                        {Object.entries(metadata.tags).map(([key, value]) => (
+                                        {Object.entries(func.tags).map(([key, value]) => (
                                             <Text key={key}>
                                                 {'  '}
                                                 <Text color={theme.colors.highlight}>{key}</Text>
                                                 {': '}
-                                                {value}
+                                                {String(value)}
                                             </Text>
                                         ))}
                                     </Box>

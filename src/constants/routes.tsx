@@ -9,6 +9,7 @@ import {theme} from '../theme.js';
 export interface RouteConfig {
     component: FC<any>;
     name: ScreenName;
+    requiresCache?: boolean;
 }
 
 export type ScreenName = 'API Gateway' | 'CloudFront' | 'CloudWatch' | 'DynamoDB' | 'EC2' | 'ECS' | 'EKS' | 'IAM' | 'Lambda' | 'RDS' | 'Route 53' | 'S3' | 'selector' | 'SNS' | 'SQS' | 'VPC';
@@ -55,21 +56,21 @@ const ComingSoon: FC<{onBack?: () => void}> = ({onBack}) => {
     );
 };
 
-export const ROUTES: Record<ScreenName, FC<any>> = {
-    'API Gateway': ComingSoon,
-    CloudFront   : ComingSoon,
-    CloudWatch   : ComingSoon,
-    DynamoDB     : ComingSoon,
-    EC2          : EC2Screen,
-    ECS          : ComingSoon,
-    EKS          : ComingSoon,
-    IAM          : ComingSoon,
-    Lambda       : LambdaScreen,
-    RDS          : ComingSoon,
-    'Route 53'   : ComingSoon,
-    S3           : S3Screen,
-    selector     : ComingSoon, // Will be handled separately in App
-    SNS          : ComingSoon,
-    SQS          : ComingSoon,
-    VPC          : ComingSoon,
+export const ROUTES: Record<ScreenName, RouteConfig> = {
+    'API Gateway': {component: ComingSoon, name: 'API Gateway'},
+    CloudFront   : {component: ComingSoon, name: 'CloudFront'},
+    CloudWatch   : {component: ComingSoon, name: 'CloudWatch'},
+    DynamoDB     : {component: ComingSoon, name: 'DynamoDB'},
+    EC2          : {component: EC2Screen, name: 'EC2', requiresCache: true},
+    ECS          : {component: ComingSoon, name: 'ECS'},
+    EKS          : {component: ComingSoon, name: 'EKS'},
+    IAM          : {component: ComingSoon, name: 'IAM'},
+    Lambda       : {component: LambdaScreen, name: 'Lambda', requiresCache: true},
+    RDS          : {component: ComingSoon, name: 'RDS'},
+    'Route 53'   : {component: ComingSoon, name: 'Route 53'},
+    S3           : {component: S3Screen, name: 'S3', requiresCache: true},
+    selector     : {component: ComingSoon, name: 'selector'},
+    SNS          : {component: ComingSoon, name: 'SNS'},
+    SQS          : {component: ComingSoon, name: 'SQS'},
+    VPC          : {component: ComingSoon, name: 'VPC'},
 };

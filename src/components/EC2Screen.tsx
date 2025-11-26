@@ -1,8 +1,7 @@
 import {
     DescribeInstancesCommand,
     DescribeTagsCommand,
-    EC2Client,
-    type Tag
+    EC2Client
 } from '@aws-sdk/client-ec2';
 import {Spinner} from '@inkjs/ui';
 import {Box, Text} from 'ink';
@@ -10,29 +9,19 @@ import React, {type FC, useCallback, useState} from 'react';
 
 import {useCachedResource} from '../hooks/useCachedResource.js';
 import {theme} from '../theme.js';
+import {type ServiceScreenProps} from '../types/common.js';
+import {type EC2Instance} from '../types/resources.js';
+import {getAwsRegion} from '../utils/aws.js';
 import {ResourceListScreen} from './ResourceListScreen.js';
 
-interface EC2Instance {
-    id: string;
-    instanceType?: string;
-    name: string;
-    privateIp?: string;
-    publicIp?: string;
-    state?: string;
-}
-
-interface EC2ScreenProps {
-    cachedData?: {data: EC2Instance[]; error: null | string; loaded: boolean};
-    onBack?: () => void;
-    onDataLoaded?: (data: {data: EC2Instance[]; error: null | string; loaded: boolean}) => void;
-}
+type EC2ScreenProps = ServiceScreenProps<EC2Instance>;
 
 export const EC2Screen: FC<EC2ScreenProps> = ({cachedData, onBack, onDataLoaded}) => {
-    const [instanceMetadata, setInstanceMetadata] = useState<Record<string, {availabilityZone?: string; launchTime?: Date; platform?: string; tags?: Tag[]; vpcId?: string}>>({});
+    const [instances, setInstances] = useState<EC2Instance[]>(cachedData?.data || []);
 
     const fetchInstances = useCallback(async (): Promise<EC2Instance[]> => {
         const ec2Client = new EC2Client({
-            region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
+            region: getAwsRegion(),
         });
 
         const command = new DescribeInstancesCommand({});
@@ -41,7 +30,7 @@ export const EC2Screen: FC<EC2ScreenProps> = ({cachedData, onBack, onDataLoaded}
 
         for (const reservation of response.Reservations || []) {
             for (const instance of reservation.Instances || []) {
-                const nameTag = instance.Tags?.find((tag: Tag) => tag.Key === 'Name');
+                const nameTag = instance.Tags?.find((tag) => tag.Key === 'Name');
                 instances.push({
                     id          : instance.InstanceId || '',
                     instanceType: instance.InstanceType,
@@ -56,18 +45,23 @@ export const EC2Screen: FC<EC2ScreenProps> = ({cachedData, onBack, onDataLoaded}
         return instances;
     }, []);
 
-    const {data: instances, error, loading} = useCachedResource({
+    const {error, loading} = useCachedResource({
         cachedData,
-        fetchData: fetchInstances,
-        onDataLoaded,
+        fetchData   : fetchInstances,
+        onDataLoaded: (data) => {
+            setInstances(data.data);
+            onDataLoaded?.(data);
+        },
     });
 
     const fetchInstanceMetadata = useCallback(async (instanceId: string): Promise<void> => {
-        if (instanceMetadata[instanceId]) return;
+        // Check if metadata already exists
+        const instance = instances.find(i => i.id === instanceId);
+        if (instance?.availabilityZone !== undefined) return;
 
         try {
             const ec2Client = new EC2Client({
-                region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
+                region: getAwsRegion(),
             });
 
             const [instanceResponse, tagsResponse] = await Promise.allSettled([
@@ -88,12 +82,12 @@ export const EC2Screen: FC<EC2ScreenProps> = ({cachedData, onBack, onDataLoaded}
             let vpcId: string | undefined;
 
             if (instanceResponse.status === 'fulfilled') {
-                const instance = instanceResponse.value.Reservations?.[0]?.Instances?.[0];
-                if (instance) {
-                    availabilityZone = instance.Placement?.AvailabilityZone;
-                    launchTime = instance.LaunchTime;
-                    platform = instance.Platform || 'Linux/Unix';
-                    vpcId = instance.VpcId;
+                const instanceData = instanceResponse.value.Reservations?.[0]?.Instances?.[0];
+                if (instanceData) {
+                    availabilityZone = instanceData.Placement?.AvailabilityZone;
+                    launchTime = instanceData.LaunchTime;
+                    platform = instanceData.Platform || 'Linux/Unix';
+                    vpcId = instanceData.VpcId;
                 }
             }
 
@@ -101,14 +95,18 @@ export const EC2Screen: FC<EC2ScreenProps> = ({cachedData, onBack, onDataLoaded}
                 ? tagsResponse.value.Tags || []
                 : [];
 
-            setInstanceMetadata(prev => ({
-                ...prev,
-                [instanceId]: {availabilityZone, launchTime, platform, tags, vpcId},
-            }));
+            // Update the instance in the list with metadata
+            const updatedInstances = instances.map(i =>
+                i.id === instanceId
+                    ? {...i, availabilityZone, launchTime, platform, tags, vpcId}
+                    : i
+            );
+            setInstances(updatedInstances);
+            onDataLoaded?.({data: updatedInstances, error: null, loaded: true});
         } catch {
             // Silently fail metadata fetch
         }
-    }, [instanceMetadata]);
+    }, [instances, onDataLoaded]);
 
     return (
         <ResourceListScreen
@@ -142,7 +140,7 @@ export const EC2Screen: FC<EC2ScreenProps> = ({cachedData, onBack, onDataLoaded}
                 );
             }}
             renderMetadata={(instance) => {
-                const metadata = instanceMetadata[instance.id];
+                const hasMetadata = instance.availabilityZone !== undefined;
 
                 return (
                     <Box flexDirection='column'>
@@ -174,39 +172,39 @@ export const EC2Screen: FC<EC2ScreenProps> = ({cachedData, onBack, onDataLoaded}
                                 {instance.privateIp}
                             </Text>
                         )}
-                        {metadata ? (
+                        {hasMetadata ? (
                             <>
-                                {metadata.availabilityZone && (
+                                {instance.availabilityZone && (
                                     <Text>
                                         <Text dimColor>Availability Zone: </Text>
-                                        {metadata.availabilityZone}
+                                        {instance.availabilityZone}
                                     </Text>
                                 )}
-                                {metadata.vpcId && (
+                                {instance.vpcId && (
                                     <Text>
                                         <Text dimColor>VPC: </Text>
-                                        {metadata.vpcId}
+                                        {instance.vpcId}
                                     </Text>
                                 )}
-                                {metadata.platform && (
+                                {instance.platform && (
                                     <Text>
                                         <Text dimColor>Platform: </Text>
-                                        {metadata.platform}
+                                        {instance.platform}
                                     </Text>
                                 )}
-                                {metadata.launchTime && (
+                                {instance.launchTime && (
                                     <Text>
                                         <Text dimColor>Launch Time: </Text>
-                                        {metadata.launchTime.toLocaleString()}
+                                        {instance.launchTime.toLocaleString()}
                                     </Text>
                                 )}
-                                {metadata.tags && metadata.tags.length > 0 && (
+                                {instance.tags && instance.tags.length > 0 && (
                                     <Box
                                         flexDirection='column'
                                         marginTop={1}
                                     >
                                         <Text dimColor>Tags:</Text>
-                                        {metadata.tags.map((tag) => (
+                                        {instance.tags.map((tag) => (
                                             <Text key={tag.Key}>
                                                 {'  '}
                                                 <Text color={theme.colors.highlight}>{tag.Key}</Text>

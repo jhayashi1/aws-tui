@@ -4,8 +4,7 @@ import {
     GetBucketVersioningCommand,
     ListBucketsCommand,
     ListObjectsV2Command,
-    S3Client,
-    type Tag
+    S3Client
 } from '@aws-sdk/client-s3';
 import {Spinner} from '@inkjs/ui';
 import {Box, Text} from 'ink';
@@ -13,6 +12,9 @@ import React, {type FC, useCallback, useState} from 'react';
 
 import {useCachedResource} from '../hooks/useCachedResource.js';
 import {theme} from '../theme.js';
+import {type ServiceScreenProps} from '../types/common.js';
+import {type S3Bucket} from '../types/resources.js';
+import {formatBytes, getAwsRegion} from '../utils/aws.js';
 import {ResourceListScreen} from './ResourceListScreen.js';
 
 interface Bucket {
@@ -20,60 +22,44 @@ interface Bucket {
     Name?: string;
 }
 
-interface S3Bucket {
-    creationDate?: Date;
-    id: string;
-    location?: string;
-    metadata?: string;
-    name: string;
-    versioning?: string;
-}
-
-interface S3ScreenProps {
-    cachedData?: {data: S3Bucket[]; error: null | string; loaded: boolean};
-    onBack?: () => void;
-    onDataLoaded?: (data: {data: S3Bucket[]; error: null | string; loaded: boolean}) => void;
-}
-
-const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
-};
+type S3ScreenProps = ServiceScreenProps<S3Bucket>;
 
 export const S3Screen: FC<S3ScreenProps> = ({cachedData, onBack, onDataLoaded}) => {
-    const [bucketMetadata, setBucketMetadata] = useState<Record<string, {location?: string; objectCount?: number; tags?: Tag[]; totalSize?: number; versioning?: string}>>({});
+    const [buckets, setBuckets] = useState<S3Bucket[]>(cachedData?.data || []);
 
     const fetchBuckets = useCallback(async (): Promise<S3Bucket[]> => {
         const s3Client = new S3Client({
-            region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
+            region: getAwsRegion(),
         });
 
         const command = new ListBucketsCommand({});
         const response = await s3Client.send(command);
-        const buckets = response.Buckets || [];
+        const fetchedBuckets = response.Buckets || [];
 
-        return buckets.map((bucket: Bucket) => ({
+        return fetchedBuckets.map((bucket: Bucket) => ({
             creationDate: bucket.CreationDate,
             id          : bucket.Name || '',
             name        : bucket.Name || '',
         }));
     }, []);
 
-    const {data: buckets, error, loading} = useCachedResource({
+    const {error, loading} = useCachedResource({
         cachedData,
-        fetchData: fetchBuckets,
-        onDataLoaded,
+        fetchData   : fetchBuckets,
+        onDataLoaded: (data) => {
+            setBuckets(data.data);
+            onDataLoaded?.(data);
+        },
     });
 
     const fetchBucketMetadata = useCallback(async (bucketName: string): Promise<void> => {
-        if (bucketMetadata[bucketName]) return;
+        // Check if metadata already exists
+        const bucket = buckets.find(b => b.name === bucketName);
+        if (bucket?.location !== undefined) return;
 
         try {
             const s3Client = new S3Client({
-                region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
+                region: getAwsRegion(),
             });
 
             const [locationResponse, versioningResponse, objectsResponse, taggingResponse] = await Promise.allSettled([
@@ -104,14 +90,18 @@ export const S3Screen: FC<S3ScreenProps> = ({cachedData, onBack, onDataLoaded}) 
                 ? taggingResponse.value.TagSet || []
                 : [];
 
-            setBucketMetadata(prev => ({
-                ...prev,
-                [bucketName]: {location, objectCount, tags, totalSize, versioning},
-            }));
+            // Update the bucket in the list with metadata
+            const updatedBuckets = buckets.map(b =>
+                b.name === bucketName
+                    ? {...b, location, objectCount, tags, totalSize, versioning}
+                    : b
+            );
+            setBuckets(updatedBuckets);
+            onDataLoaded?.({data: updatedBuckets, error: null, loaded: true});
         } catch {
             // Silently fail metadata fetch
         }
-    }, [bucketMetadata]);
+    }, [buckets, onDataLoaded]);
 
     return (
         <ResourceListScreen
@@ -135,7 +125,7 @@ export const S3Screen: FC<S3ScreenProps> = ({cachedData, onBack, onDataLoaded}) 
                 );
             }}
             renderMetadata={(bucket) => {
-                const metadata = bucketMetadata[bucket.name];
+                const hasMetadata = bucket.location !== undefined;
 
                 return (
                     <Box flexDirection='column'>
@@ -149,31 +139,31 @@ export const S3Screen: FC<S3ScreenProps> = ({cachedData, onBack, onDataLoaded}) 
                                 {bucket.creationDate.toLocaleString()}
                             </Text>
                         )}
-                        {metadata ? (
+                        {hasMetadata ? (
                             <>
                                 <Text>
                                     <Text dimColor>Region: </Text>
-                                    {metadata.location}
+                                    {bucket.location}
                                 </Text>
                                 <Text>
                                     <Text dimColor>Versioning: </Text>
-                                    {metadata.versioning}
+                                    {bucket.versioning}
                                 </Text>
                                 <Text>
                                     <Text dimColor>Objects: </Text>
-                                    {metadata.objectCount !== undefined ? metadata.objectCount.toLocaleString() : 'Unknown'}
+                                    {bucket.objectCount !== undefined ? bucket.objectCount.toLocaleString() : 'Unknown'}
                                 </Text>
                                 <Text>
                                     <Text dimColor>Size: </Text>
-                                    {metadata.totalSize !== undefined ? formatBytes(metadata.totalSize) : 'Unknown'}
+                                    {bucket.totalSize !== undefined ? formatBytes(bucket.totalSize) : 'Unknown'}
                                 </Text>
-                                {metadata.tags && metadata.tags.length > 0 && (
+                                {bucket.tags && bucket.tags.length > 0 && (
                                     <Box
                                         flexDirection='column'
                                         marginTop={1}
                                     >
                                         <Text dimColor>Tags:</Text>
-                                        {metadata.tags.map((tag) => (
+                                        {bucket.tags.map((tag) => (
                                             <Text key={tag.Key}>
                                                 {'  '}
                                                 <Text color={theme.colors.highlight}>{tag.Key}</Text>
