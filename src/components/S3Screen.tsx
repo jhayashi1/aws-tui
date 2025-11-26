@@ -1,159 +1,196 @@
-import {ListBucketsCommand, S3Client} from '@aws-sdk/client-s3';
+import {
+    GetBucketLocationCommand,
+    GetBucketTaggingCommand,
+    GetBucketVersioningCommand,
+    ListBucketsCommand,
+    ListObjectsV2Command,
+    S3Client,
+    type Tag
+} from '@aws-sdk/client-s3';
 import {Spinner} from '@inkjs/ui';
-import {Box, Text, useInput} from 'ink';
-import React, {type FC, useEffect, useState} from 'react';
+import {Box, Text} from 'ink';
+import React, {type FC, useCallback, useState} from 'react';
 
+import {useCachedResource} from '../hooks/useCachedResource.js';
 import {theme} from '../theme.js';
+import {ResourceListScreen} from './ResourceListScreen.js';
 
 interface Bucket {
     CreationDate?: Date;
     Name?: string;
 }
 
-interface S3ScreenProps {
-    cachedData?: {buckets: Bucket[]; error: null | string; loaded: boolean};
-    onBack?: () => void;
-    onDataLoaded?: (data: {buckets: Bucket[]; error: null | string; loaded: boolean}) => void;
+interface S3Bucket {
+    creationDate?: Date;
+    id: string;
+    location?: string;
+    metadata?: string;
+    name: string;
+    versioning?: string;
 }
 
+interface S3ScreenProps {
+    cachedData?: {data: S3Bucket[]; error: null | string; loaded: boolean};
+    onBack?: () => void;
+    onDataLoaded?: (data: {data: S3Bucket[]; error: null | string; loaded: boolean}) => void;
+}
+
+const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+};
+
 export const S3Screen: FC<S3ScreenProps> = ({cachedData, onBack, onDataLoaded}) => {
-    const [buckets, setBuckets] = useState<Bucket[]>(cachedData?.buckets || []);
-    const [selectedIndex, setSelectedIndex] = useState(0);
-    const [loading, setLoading] = useState(!cachedData?.loaded);
-    const [error, setError] = useState<null | string>(cachedData?.error || null);
+    const [bucketMetadata, setBucketMetadata] = useState<Record<string, {location?: string; objectCount?: number; tags?: Tag[]; totalSize?: number; versioning?: string}>>({});
 
-    useEffect(() => {
-        // Skip fetch if we have cached data
-        if (cachedData?.loaded) {
-            return;
-        }
-
+    const fetchBuckets = useCallback(async (): Promise<S3Bucket[]> => {
         const s3Client = new S3Client({
             region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
         });
 
-        const fetchBuckets = async (): Promise<void> => {
-            try {
-                const command = new ListBucketsCommand({});
-                const response = await s3Client.send(command);
-                const newBuckets = response.Buckets || [];
-                setBuckets(newBuckets);
-                if (onDataLoaded) {
-                    onDataLoaded({buckets: newBuckets, error: null, loaded: true});
-                }
-            } catch (err) {
-                const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-                setError(errorMsg);
-                if (onDataLoaded) {
-                    onDataLoaded({buckets: [], error: errorMsg, loaded: true});
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
+        const command = new ListBucketsCommand({});
+        const response = await s3Client.send(command);
+        const buckets = response.Buckets || [];
 
-        fetchBuckets();
-    }, [cachedData?.loaded, onDataLoaded]);
+        return buckets.map((bucket: Bucket) => ({
+            creationDate: bucket.CreationDate,
+            id          : bucket.Name || '',
+            name        : bucket.Name || '',
+        }));
+    }, []);
 
-    useInput((input, key) => {
-        if (key.upArrow) {
-            setSelectedIndex(prev => Math.max(0, prev - 1));
-        } else if (key.downArrow) {
-            setSelectedIndex(prev => Math.min(buckets.length - 1, prev + 1));
-        } else if (key.escape || (key.ctrl && input === 'c')) {
-            if (onBack) {
-                onBack();
-            } else {
-                process.exit(0);
-            }
-        } else if (input === 'b' || input === 'B') {
-            if (onBack) {
-                onBack();
-            }
-        }
+    const {data: buckets, error, loading} = useCachedResource({
+        cachedData,
+        fetchData: fetchBuckets,
+        onDataLoaded,
     });
 
-    if (loading) {
-        return (
-            <Box
-                flexDirection='column'
-                paddingX={2}
-                paddingY={1}
-            >
-                <Box>
-                    <Spinner label='Loading S3 buckets...' />
-                </Box>
-            </Box>
-        );
-    }
+    const fetchBucketMetadata = useCallback(async (bucketName: string): Promise<void> => {
+        if (bucketMetadata[bucketName]) return;
 
-    if (error) {
-        return (
-            <Box
-                flexDirection='column'
-                paddingX={2}
-                paddingY={1}
-            >
-                <Text color='red'>Error: {error}</Text>
-                <Box marginTop={1}>
-                    <Text dimColor>Press B to go back | Esc to exit</Text>
-                </Box>
-            </Box>
-        );
-    }
+        try {
+            const s3Client = new S3Client({
+                region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
+            });
+
+            const [locationResponse, versioningResponse, objectsResponse, taggingResponse] = await Promise.allSettled([
+                s3Client.send(new GetBucketLocationCommand({Bucket: bucketName})),
+                s3Client.send(new GetBucketVersioningCommand({Bucket: bucketName})),
+                s3Client.send(new ListObjectsV2Command({Bucket: bucketName, MaxKeys: 1000})),
+                s3Client.send(new GetBucketTaggingCommand({Bucket: bucketName})),
+            ]);
+
+            const location = locationResponse.status === 'fulfilled'
+                ? locationResponse.value.LocationConstraint || 'us-east-1'
+                : 'Unknown';
+
+            const versioning = versioningResponse.status === 'fulfilled'
+                ? versioningResponse.value.Status || 'Disabled'
+                : 'Unknown';
+
+            let objectCount = 0;
+            let totalSize = 0;
+
+            if (objectsResponse.status === 'fulfilled') {
+                const contents = objectsResponse.value.Contents || [];
+                objectCount = objectsResponse.value.KeyCount || contents.length;
+                totalSize = contents.reduce((sum, obj) => sum + (obj.Size || 0), 0);
+            }
+
+            const tags = taggingResponse.status === 'fulfilled'
+                ? taggingResponse.value.TagSet || []
+                : [];
+
+            setBucketMetadata(prev => ({
+                ...prev,
+                [bucketName]: {location, objectCount, tags, totalSize, versioning},
+            }));
+        } catch {
+            // Silently fail metadata fetch
+        }
+    }, [bucketMetadata]);
 
     return (
-        <Box
-            flexDirection='column'
-            paddingX={2}
-            paddingY={1}
-        >
-            <Box
-                justifyContent='center'
-                marginBottom={1}
-            >
-                <Text
-                    bold
-                    color={theme.colors.primary}
-                >
-                    S3 Buckets ({buckets.length})
-                </Text>
-            </Box>
+        <ResourceListScreen
+            error={error}
+            items={buckets}
+            loading={loading}
+            onBack={onBack}
+            renderItem={(bucket, isSelected) => {
+                if (isSelected) {
+                    fetchBucketMetadata(bucket.name);
+                }
 
-            <Box flexDirection='column'>
-                {buckets.length > 0 ? (
-                    buckets.map((bucket, index) => (
-                        <Box
-                            key={bucket.Name}
-                            marginY={0}
-                        >
-                            <Text
-                                bold={index === selectedIndex}
-                                color={
-                                    index === selectedIndex
-                                        ? theme.colors.highlight
-                                        : theme.colors.text
-                                }
-                            >
-                                {index === selectedIndex ? '❯ ' : '  '}
-                                {bucket.Name}
-                                {bucket.CreationDate && (
-                                    <Text dimColor>
-                                        {' '}
-                                        - Created: {bucket.CreationDate.toLocaleDateString()}
-                                    </Text>
-                                )}
+                return (
+                    <Text
+                        bold={isSelected}
+                        color={isSelected ? theme.colors.highlight : theme.colors.text}
+                    >
+                        {isSelected ? '❯ ' : '  '}
+                        {bucket.name}
+                    </Text>
+                );
+            }}
+            renderMetadata={(bucket) => {
+                const metadata = bucketMetadata[bucket.name];
+
+                return (
+                    <Box flexDirection='column'>
+                        <Text>
+                            <Text dimColor>Name: </Text>
+                            {bucket.name}
+                        </Text>
+                        {bucket.creationDate && (
+                            <Text>
+                                <Text dimColor>Created: </Text>
+                                {bucket.creationDate.toLocaleString()}
                             </Text>
-                        </Box>
-                    ))
-                ) : (
-                    <Text dimColor>No S3 buckets found</Text>
-                )}
-            </Box>
-
-            <Box marginTop={1}>
-                <Text dimColor>↑↓ Navigate | B: Back | Esc: Exit</Text>
-            </Box>
-        </Box>
+                        )}
+                        {metadata ? (
+                            <>
+                                <Text>
+                                    <Text dimColor>Region: </Text>
+                                    {metadata.location}
+                                </Text>
+                                <Text>
+                                    <Text dimColor>Versioning: </Text>
+                                    {metadata.versioning}
+                                </Text>
+                                <Text>
+                                    <Text dimColor>Objects: </Text>
+                                    {metadata.objectCount !== undefined ? metadata.objectCount.toLocaleString() : 'Unknown'}
+                                </Text>
+                                <Text>
+                                    <Text dimColor>Size: </Text>
+                                    {metadata.totalSize !== undefined ? formatBytes(metadata.totalSize) : 'Unknown'}
+                                </Text>
+                                {metadata.tags && metadata.tags.length > 0 && (
+                                    <Box
+                                        flexDirection='column'
+                                        marginTop={1}
+                                    >
+                                        <Text dimColor>Tags:</Text>
+                                        {metadata.tags.map((tag) => (
+                                            <Text key={tag.Key}>
+                                                {'  '}
+                                                <Text color={theme.colors.highlight}>{tag.Key}</Text>
+                                                {': '}
+                                                {tag.Value}
+                                            </Text>
+                                        ))}
+                                    </Box>
+                                )}
+                            </>
+                        ) : (
+                            <Spinner label='Loading metadata...' />
+                        )}
+                    </Box>
+                );
+            }}
+            title='S3 Buckets'
+        />
     );
 };

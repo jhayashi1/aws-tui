@@ -5,18 +5,19 @@ import {S3Screen} from './components/S3Screen.js';
 import {ServiceSelector} from './components/ServiceSelector.js';
 import {ROUTES, type ScreenName} from './constants/routes.js';
 
-interface Bucket {
-    CreationDate?: Date;
-    Name?: string;
+interface S3Bucket {
+    creationDate?: Date;
+    id: string;
+    name: string;
 }
 
 export const App: FC = () => {
     const [currentScreen, setCurrentScreen] = useState<ScreenName>('selector');
     const [s3Cache, setS3Cache] = useState<{
-        buckets: Bucket[];
+        data: S3Bucket[];
         error: null | string;
         loaded: boolean;
-    }>({buckets: [], error: null, loaded: false});
+    }>({data: [], error: null, loaded: false});
 
     const handleServiceSelect = (service: string): void => {
         setCurrentScreen(service as ScreenName);
