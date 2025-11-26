@@ -1,6 +1,8 @@
-import {createCliRenderer} from '@opentui/core';
-import {createRoot} from '@opentui/react';
-import {useState} from 'react';
+import {Box, render, Text, useInput} from 'ink';
+import TextInput from 'ink-text-input';
+import React, {type FC, useState} from 'react';
+
+import {theme} from './theme.js';
 
 const AWS_SERVICES = [
     {description: 'Simple Storage Service - Object storage', name: 'S3'},
@@ -20,89 +22,107 @@ const AWS_SERVICES = [
     {description: 'DNS and domain management', name: 'Route 53'},
 ];
 
-export const App = () => {
-    const [searchTerm, setSearchTerm] = useState('');
+export const App: FC = () => {
+    const [searchQuery, setSearchQuery] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [selectedService, setSelectedService] = useState<null | string>(null);
 
-    const filteredServices = AWS_SERVICES.filter(service =>
-        service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        service.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredServices = AWS_SERVICES.filter(
+        service =>
+            service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            service.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Reset selection when filter changes
-    const currentMax = filteredServices.length - 1;
-    if (selectedIndex > currentMax && currentMax >= 0) {
-        setSelectedIndex(currentMax);
+    // Clamp selected index to valid range
+    const validSelectedIndex = Math.min(
+        selectedIndex,
+        Math.max(0, filteredServices.length - 1)
+    );
+
+    useInput((input, key) => {
+        if (selectedService) return;
+
+        if (key.upArrow) {
+            setSelectedIndex(prev => Math.max(0, prev - 1));
+        } else if (key.downArrow) {
+            setSelectedIndex(prev => Math.min(filteredServices.length - 1, prev + 1));
+        } else if (key.return) {
+            if (filteredServices[validSelectedIndex]) {
+                setSelectedService(filteredServices[validSelectedIndex].name);
+            }
+        } else if (key.escape) {
+            process.exit(0);
+        }
+    });
+
+    if (selectedService) {
+        return (
+            <Box
+                flexDirection='column'
+                paddingX={2}
+                paddingY={1}
+            >
+                <Text color={theme.colors.success}>✓ Selected: {selectedService}</Text>
+                <Box marginTop={1}>
+                    <Text dimColor>Press Esc to exit</Text>
+                </Box>
+            </Box>
+        );
     }
 
-    const handleSelect = () => {
-        const service = filteredServices[selectedIndex];
-        if (service) {
-            setSelectedService(service.name);
-            console.log(`Selected: ${service.name}`);
-        }
-    };
-
     return (
-        <box
+        <Box
             flexDirection='column'
-            padding={2}
+            paddingX={2}
+            paddingY={1}
         >
-            <box
+            <Box
                 justifyContent='center'
                 marginBottom={1}
             >
-                <ascii-font
-                    color='#FF9900'
-                    font='huge'
-                    text='AWS'
-                />
-            </box>
-
-            <box
-                flexDirection='column'
-                marginBottom={1}
-            >
-                <box marginBottom={1}>
-                    <text fg='cyan'>Search: </text>
-                    <input
-                        onChange={setSearchTerm}
-                        onInput={setSearchTerm}
-                        placeholder='Type to search...'
-                        value={searchTerm}
-                    />
-                </box>
-                <text attributes={2}>
-                    Type to search, use ↑↓ arrows to navigate, Enter to select
-                </text>
-            </box>
-
-            {selectedService && (
-                <box
-                    backgroundColor='#232F3E'
-                    marginBottom={1}
-                    padding={1}
+                <Text
+                    bold
+                    color={theme.colors.primary}
                 >
-                    <text fg='#FF9900'>Selected: </text>
-                    <text fg='white'>{selectedService}</text>
-                </box>
-            )}
+                    AWS Service Selector
+                </Text>
+            </Box>
 
-            <select
-                focused
-                height={15}
-                onChange={(index) => setSelectedIndex(index)}
-                onSelect={handleSelect}
-                options={filteredServices}
-                selectedBackgroundColor='#FF9900'
-                selectedIndex={selectedIndex}
-                selectedTextColor='#000000'
-                showDescription
-            />
-        </box>
+            <Box marginBottom={1}>
+                <Text>Search: </Text>
+                <TextInput
+                    onChange={setSearchQuery}
+                    value={searchQuery}
+                />
+            </Box>
+
+            <Box flexDirection='column'>
+                {filteredServices.length > 0 ? (
+                    filteredServices.map((service, index) => (
+                        <Box
+                            key={service.name}
+                            marginY={0}
+                        >
+                            <Text
+                                bold={index === validSelectedIndex}
+                                color={index === validSelectedIndex ? theme.colors.highlight : theme.colors.text}
+                            >
+                                {index === validSelectedIndex ? '❯ ' : '  '}
+                                {service.name}
+                                <Text dimColor> - {service.description}</Text>
+                            </Text>
+                        </Box>
+                    ))
+                ) : (
+                    <Text dimColor>No services found</Text>
+                )}
+            </Box>
+
+            <Box marginTop={1}>
+                <Text dimColor>↑↓ Navigate | Enter: Select | Esc: Exit</Text>
+            </Box>
+        </Box>
     );
 };
 
-const renderer = await createCliRenderer();
-createRoot(renderer).render(<App />);
+render(<App />);
