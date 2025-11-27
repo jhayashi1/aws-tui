@@ -15,8 +15,7 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({onSelect}) => {
 
     const filteredServices = AWS_SERVICES.filter(
         service =>
-            service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			service.description.toLowerCase().includes(searchQuery.toLowerCase())
+            service.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Clamp selected index to valid range
@@ -78,16 +77,11 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({onSelect}) => {
                             marginY={0}
                         >
                             <Text
+                                backgroundColor={index === validSelectedIndex ? theme.colors.highlight : undefined}
                                 bold={index === validSelectedIndex}
-                                color={
-                                    index === validSelectedIndex
-                                        ? theme.colors.highlight
-                                        : theme.colors.text
-                                }
+                                color={index === validSelectedIndex ? 'black' : theme.colors.text}
                             >
-                                {index === validSelectedIndex ? '❯ ' : '  '}
                                 {service.name}
-                                <Text dimColor> - {service.description}</Text>
                             </Text>
                         </Box>
                     ))

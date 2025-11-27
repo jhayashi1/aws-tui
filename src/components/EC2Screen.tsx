@@ -111,33 +111,23 @@ export const EC2Screen: FC<EC2ScreenProps> = ({cachedData, onBack, onDataLoaded}
     return (
         <ResourceListScreen
             error={error}
-            items={instances}
-            loading={loading}
-            onBack={onBack}
-            renderItem={(instance, isSelected) => {
-                if (isSelected) {
-                    fetchInstanceMetadata(instance.id);
-                }
-
+            getItemDetails={(instance) => {
                 const stateColor = instance.state === 'running'
                     ? theme.colors.success
                     : instance.state === 'stopped'
                         ? 'red'
                         : 'yellow';
 
-                return (
-                    <Text
-                        bold={isSelected}
-                        color={isSelected ? theme.colors.highlight : theme.colors.text}
-                    >
-                        {isSelected ? '❯ ' : '  '}
-                        {instance.name}
-                        {' '}
-                        <Text color={stateColor}>
-                            ({instance.state})
-                        </Text>
-                    </Text>
-                );
+                return {
+                    color : stateColor,
+                    suffix: instance.state ? ` (${instance.state})` : undefined,
+                };
+            }}
+            items={instances}
+            loading={loading}
+            onBack={onBack}
+            onItemHovered={(instance) => {
+                fetchInstanceMetadata(instance.id);
             }}
             renderMetadata={(instance) => {
                 const hasMetadata = instance.availabilityZone !== undefined;

@@ -1,4 +1,20 @@
 /**
+ * DynamoDB Table resource interface
+ */
+export interface DynamoDBTable {
+    billingMode?: string;
+    creationDate?: Date;
+    id: string;
+    itemCount?: number;
+    name: string;
+    readCapacity?: number;
+    status?: string;
+    tableSize?: number;
+    tags?: Array<{Key?: string; Value?: string}>;
+    writeCapacity?: number;
+}
+
+/**
  * EC2 Instance resource interface
  */
 export interface EC2Instance {
@@ -31,6 +47,23 @@ export interface LambdaFunction {
     runtime?: string;
     tags?: Record<string, string>;
     timeout?: number;
+}
+
+/**
+ * RDS Database Instance resource interface
+ */
+export interface RDSInstance {
+    allocatedStorage?: number;
+    availabilityZone?: string;
+    dbInstanceClass?: string;
+    endpoint?: string;
+    engine?: string;
+    engineVersion?: string;
+    id: string;
+    multiAZ?: boolean;
+    name: string;
+    status?: string;
+    tags?: Array<{Key?: string; Value?: string}>;
 }
 
 /**

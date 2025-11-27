@@ -109,20 +109,8 @@ export const S3Screen: FC<S3ScreenProps> = ({cachedData, onBack, onDataLoaded}) 
             items={buckets}
             loading={loading}
             onBack={onBack}
-            renderItem={(bucket, isSelected) => {
-                if (isSelected) {
-                    fetchBucketMetadata(bucket.name);
-                }
-
-                return (
-                    <Text
-                        bold={isSelected}
-                        color={isSelected ? theme.colors.highlight : theme.colors.text}
-                    >
-                        {isSelected ? '❯ ' : '  '}
-                        {bucket.name}
-                    </Text>
-                );
+            onItemHovered={(bucket) => {
+                fetchBucketMetadata(bucket.name);
             }}
             renderMetadata={(bucket) => {
                 const hasMetadata = bucket.location !== undefined;

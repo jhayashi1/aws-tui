@@ -16,8 +16,10 @@
     },
     "author": "jhayashi1",
     "dependencies": {
+        "@aws-sdk/client-dynamodb": "^3.940.0",
         "@aws-sdk/client-ec2": "^3.940.0",
         "@aws-sdk/client-lambda": "^3.940.0",
+        "@aws-sdk/client-rds": "^3.940.0",
         "@aws-sdk/client-s3": "^3.940.0",
         "@inkjs/ui": "^2.0.0",
         "ink": "^5.1.0",

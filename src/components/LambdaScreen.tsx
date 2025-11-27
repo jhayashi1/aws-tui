@@ -102,29 +102,15 @@ export const LambdaScreen: FC<LambdaScreenProps> = ({cachedData, onBack, onDataL
     return (
         <ResourceListScreen
             error={error}
+            getItemDetails={(func) => ({
+                color : 'gray',
+                suffix: func.runtime ? ` (${func.runtime})` : undefined,
+            })}
             items={functions}
             loading={loading}
             onBack={onBack}
-            renderItem={(func, isSelected) => {
-                if (isSelected) {
-                    fetchFunctionMetadata(func.name);
-                }
-
-                return (
-                    <Text
-                        bold={isSelected}
-                        color={isSelected ? theme.colors.highlight : theme.colors.text}
-                    >
-                        {isSelected ? '❯ ' : '  '}
-                        {func.name}
-                        {func.runtime && (
-                            <Text dimColor>
-                                {' '}
-                                ({func.runtime})
-                            </Text>
-                        )}
-                    </Text>
-                );
+            onItemHovered={(func) => {
+                fetchFunctionMetadata(func.name);
             }}
             renderMetadata={(func) => {
                 const hasMetadata = func.handler !== undefined;

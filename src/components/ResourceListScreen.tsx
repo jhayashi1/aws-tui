@@ -10,26 +10,31 @@ interface ResourceListItem {
     id: string;
     metadata?: string;
     name: string;
+    runtime?: string;
+    state?: string;
+    status?: string;
 }
 
 interface ResourceListScreenProps<T> {
     error: null | string;
+    getItemDetails?: (item: T) => {color?: string; suffix?: string} | undefined;
     items: T[];
     loading: boolean;
     onBack?: () => void;
+    onItemHovered?: (item: T) => void;
     onSelect?: (item: T) => void;
-    renderItem: (item: T, isSelected: boolean) => React.ReactNode;
     renderMetadata?: (item: T) => React.ReactNode;
     title: string;
 }
 
 export function ResourceListScreen<T extends ResourceListItem>({
     error,
+    getItemDetails,
     items,
     loading,
     onBack,
+    onItemHovered,
     onSelect,
-    renderItem,
     renderMetadata,
     title,
 }: ResourceListScreenProps<T>): React.ReactElement {
@@ -42,6 +47,14 @@ export function ResourceListScreen<T extends ResourceListItem>({
     );
 
     const validSelectedIndex = Math.min(selectedIndex, Math.max(0, filteredItems.length - 1));
+    const currentSelectedItem = filteredItems[validSelectedIndex];
+
+    // Call onItemHovered when selection changes
+    React.useEffect(() => {
+        if (currentSelectedItem && onItemHovered) {
+            onItemHovered(currentSelectedItem);
+        }
+    }, [currentSelectedItem, onItemHovered]);
 
     useInput((input, key) => {
         if (key.upArrow) {
@@ -131,14 +144,30 @@ export function ResourceListScreen<T extends ResourceListItem>({
                 paddingY={0}
             >
                 {filteredItems.length > 0 ? (
-                    filteredItems.map((item, index) => (
-                        <Box
-                            key={item.id}
-                            marginY={0}
-                        >
-                            {renderItem(item, index === validSelectedIndex)}
-                        </Box>
-                    ))
+                    filteredItems.map((item, index) => {
+                        const isSelected = index === validSelectedIndex;
+                        const details = getItemDetails?.(item);
+
+                        return (
+                            <Box
+                                key={item.id}
+                                marginY={0}
+                            >
+                                <Text
+                                    backgroundColor={isSelected ? theme.colors.highlight : undefined}
+                                    bold={isSelected}
+                                    color={isSelected ? 'black' : theme.colors.text}
+                                >
+                                    {item.name}
+                                    {details?.suffix && (
+                                        <Text color={details.color}>
+                                            {details.suffix}
+                                        </Text>
+                                    )}
+                                </Text>
+                            </Box>
+                        );
+                    })
                 ) : (
                     <Text dimColor>
                         {searchQuery ? 'No matching results' : `No ${title.toLowerCase()} found`}
