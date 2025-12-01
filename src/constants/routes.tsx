@@ -1,11 +1,15 @@
 import {Box, Text, useInput} from 'ink';
 import React, {type FC} from 'react';
 
+import {CloudFrontScreen} from '../components/CloudFrontScreen.js';
 import {DynamoDBScreen} from '../components/DynamoDBScreen.js';
 import {EC2Screen} from '../components/EC2Screen.js';
 import {LambdaScreen} from '../components/LambdaScreen.js';
 import {RDSScreen} from '../components/RDSScreen.js';
 import {S3Screen} from '../components/S3Screen.js';
+import {SNSScreen} from '../components/SNSScreen.js';
+import {SQSScreen} from '../components/SQSScreen.js';
+import {VPCScreen} from '../components/VPCScreen.js';
 import {theme} from '../theme.js';
 
 export interface RouteConfig {
@@ -59,7 +63,7 @@ const ComingSoon: FC<{onBack?: () => void}> = ({onBack}) => {
 
 export const ROUTES: Record<ScreenName, RouteConfig> = {
     'API Gateway': {component: ComingSoon, name: 'API Gateway'},
-    CloudFront   : {component: ComingSoon, name: 'CloudFront'},
+    CloudFront   : {component: CloudFrontScreen, name: 'CloudFront', requiresCache: true},
     CloudWatch   : {component: ComingSoon, name: 'CloudWatch'},
     DynamoDB     : {component: DynamoDBScreen, name: 'DynamoDB', requiresCache: true},
     EC2          : {component: EC2Screen, name: 'EC2', requiresCache: true},
@@ -71,7 +75,7 @@ export const ROUTES: Record<ScreenName, RouteConfig> = {
     'Route 53'   : {component: ComingSoon, name: 'Route 53'},
     S3           : {component: S3Screen, name: 'S3', requiresCache: true},
     selector     : {component: ComingSoon, name: 'selector'},
-    SNS          : {component: ComingSoon, name: 'SNS'},
-    SQS          : {component: ComingSoon, name: 'SQS'},
-    VPC          : {component: ComingSoon, name: 'VPC'},
+    SNS          : {component: SNSScreen, name: 'SNS', requiresCache: true},
+    SQS          : {component: SQSScreen, name: 'SQS', requiresCache: true},
+    VPC          : {component: VPCScreen, name: 'VPC', requiresCache: true},
 };

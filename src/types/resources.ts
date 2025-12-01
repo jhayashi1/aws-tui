@@ -1,4 +1,20 @@
 /**
+ * CloudFront Distribution resource interface
+ */
+export interface CloudFrontDistribution {
+    aliases?: string[];
+    comment?: string;
+    domainName?: string;
+    enabled?: boolean;
+    id: string;
+    lastModifiedTime?: Date;
+    name: string;
+    priceClass?: string;
+    status?: string;
+    tags?: Array<{Key?: string; Value?: string}>;
+}
+
+/**
  * DynamoDB Table resource interface
  */
 export interface DynamoDBTable {
@@ -78,4 +94,53 @@ export interface S3Bucket {
     tags?: Array<{Key?: string; Value?: string}>;
     totalSize?: number;
     versioning?: string;
+}
+
+/**
+ * SNS Topic resource interface
+ */
+export interface SNSTopic {
+    arn?: string;
+    displayName?: string;
+    id: string;
+    name: string;
+    owner?: string;
+    policy?: string;
+    subscriptionsConfirmed?: number;
+    subscriptionsDeleted?: number;
+    subscriptionsPending?: number;
+    tags?: Array<{Key?: string; Value?: string}>;
+}
+
+/**
+ * SQS Queue resource interface
+ */
+export interface SQSQueue {
+    approximateMessages?: number;
+    approximateMessagesDelayed?: number;
+    approximateMessagesNotVisible?: number;
+    createdTimestamp?: Date;
+    delaySeconds?: number;
+    id: string;
+    lastModifiedTimestamp?: Date;
+    maxMessageSize?: number;
+    messageRetentionPeriod?: number;
+    name: string;
+    queueArn?: string;
+    tags?: Array<{Key?: string; Value?: string}>;
+    visibilityTimeout?: number;
+}
+
+/**
+ * VPC resource interface
+ */
+export interface VPC {
+    cidrBlock?: string;
+    dhcpOptionsId?: string;
+    id: string;
+    instanceTenancy?: string;
+    isDefault?: boolean;
+    name: string;
+    state?: string;
+    tags?: Array<{Key?: string; Value?: string}>;
 }
