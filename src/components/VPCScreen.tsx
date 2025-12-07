@@ -24,11 +24,18 @@ export const VPCScreen: FC<VPCScreenProps> = ({cachedData, onBack, onDataLoaded}
             region: getAwsRegion(),
         });
 
-        const command = new DescribeVpcsCommand({});
-        const response = await ec2Client.send(command);
-        const vpcList = response.Vpcs || [];
+        const allVpcs = [];
+        let nextToken: string | undefined;
 
-        return vpcList.map((vpc: Vpc) => {
+        do {
+            const command = new DescribeVpcsCommand({NextToken: nextToken});
+            const response = await ec2Client.send(command);
+            const vpcList = response.Vpcs || [];
+            allVpcs.push(...vpcList);
+            nextToken = response.NextToken;
+        } while (nextToken);
+
+        return allVpcs.map((vpc: Vpc) => {
             const nameTag = vpc.Tags?.find((tag: Tag) => tag.Key === 'Name');
             return {
                 cidrBlock      : vpc.CidrBlock,
@@ -71,36 +78,36 @@ export const VPCScreen: FC<VPCScreenProps> = ({cachedData, onBack, onDataLoaded}
             renderMetadata={(vpc) => (
                 <Box flexDirection='column'>
                     <Text>
-                        <Text dimColor>VPC ID: </Text>
+                        <Text dimColor>{'VPC ID: '}</Text>
                         {vpc.id}
                     </Text>
                     {vpc.state && (
                         <Text>
-                            <Text dimColor>State: </Text>
+                            <Text dimColor>{'State: '}</Text>
                             {vpc.state}
                         </Text>
                     )}
                     {vpc.cidrBlock && (
                         <Text>
-                            <Text dimColor>CIDR Block: </Text>
+                            <Text dimColor>{'CIDR Block: '}</Text>
                             {vpc.cidrBlock}
                         </Text>
                     )}
                     {vpc.isDefault !== undefined && (
                         <Text>
-                            <Text dimColor>Default VPC: </Text>
+                            <Text dimColor>{'Default VPC: '}</Text>
                             {vpc.isDefault ? 'Yes' : 'No'}
                         </Text>
                     )}
                     {vpc.instanceTenancy && (
                         <Text>
-                            <Text dimColor>Tenancy: </Text>
+                            <Text dimColor>{'Tenancy: '}</Text>
                             {vpc.instanceTenancy}
                         </Text>
                     )}
                     {vpc.dhcpOptionsId && (
                         <Text>
-                            <Text dimColor>DHCP Options: </Text>
+                            <Text dimColor>{'DHCP Options: '}</Text>
                             {vpc.dhcpOptionsId}
                         </Text>
                     )}
@@ -109,7 +116,7 @@ export const VPCScreen: FC<VPCScreenProps> = ({cachedData, onBack, onDataLoaded}
                             flexDirection='column'
                             marginTop={1}
                         >
-                            <Text dimColor>Tags:</Text>
+                            <Text dimColor>{'Tags:'}</Text>
                             {vpc.tags.map((tag) => (
                                 <Text key={tag.Key}>
                                     {'  '}

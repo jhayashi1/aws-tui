@@ -32,11 +32,12 @@ export const S3Screen: FC<S3ScreenProps> = ({cachedData, onBack, onDataLoaded}) 
             region: getAwsRegion(),
         });
 
+        // ListBuckets doesn't support pagination - it returns all buckets
         const command = new ListBucketsCommand({});
         const response = await s3Client.send(command);
-        const fetchedBuckets = response.Buckets || [];
+        const buckets = response.Buckets || [];
 
-        return fetchedBuckets.map((bucket: Bucket) => ({
+        return buckets.map((bucket: Bucket) => ({
             creationDate: bucket.CreationDate,
             id          : bucket.Name || '',
             name        : bucket.Name || '',
@@ -118,31 +119,31 @@ export const S3Screen: FC<S3ScreenProps> = ({cachedData, onBack, onDataLoaded}) 
                 return (
                     <Box flexDirection='column'>
                         <Text>
-                            <Text dimColor>Name: </Text>
+                            <Text dimColor>{'Name: '}</Text>
                             {bucket.name}
                         </Text>
                         {bucket.creationDate && (
                             <Text>
-                                <Text dimColor>Created: </Text>
+                                <Text dimColor>{'Created: '}</Text>
                                 {bucket.creationDate.toLocaleString()}
                             </Text>
                         )}
                         {hasMetadata ? (
                             <>
                                 <Text>
-                                    <Text dimColor>Region: </Text>
+                                    <Text dimColor>{'Region: '}</Text>
                                     {bucket.location}
                                 </Text>
                                 <Text>
-                                    <Text dimColor>Versioning: </Text>
+                                    <Text dimColor>{'Versioning: '}</Text>
                                     {bucket.versioning}
                                 </Text>
                                 <Text>
-                                    <Text dimColor>Objects: </Text>
+                                    <Text dimColor>{'Objects: '}</Text>
                                     {bucket.objectCount !== undefined ? bucket.objectCount.toLocaleString() : 'Unknown'}
                                 </Text>
                                 <Text>
-                                    <Text dimColor>Size: </Text>
+                                    <Text dimColor>{'Size: '}</Text>
                                     {bucket.totalSize !== undefined ? formatBytes(bucket.totalSize) : 'Unknown'}
                                 </Text>
                                 {bucket.tags && bucket.tags.length > 0 && (
@@ -150,7 +151,7 @@ export const S3Screen: FC<S3ScreenProps> = ({cachedData, onBack, onDataLoaded}) 
                                         flexDirection='column'
                                         marginTop={1}
                                     >
-                                        <Text dimColor>Tags:</Text>
+                                        <Text dimColor>{'Tags:'}</Text>
                                         {bucket.tags.map((tag) => (
                                             <Text key={tag.Key}>
                                                 {'  '}

@@ -50,12 +50,12 @@ const ComingSoon: FC<{onBack?: () => void}> = ({onBack}) => {
                     bold
                     color={theme.colors.primary}
                 >
-                    Coming Soon
+                    {'Coming Soon'}
                 </Text>
             </Box>
-            <Text>This service screen is not yet implemented.</Text>
+            <Text>{'This service screen is not yet implemented.'}</Text>
             <Box marginTop={1}>
-                <Text dimColor>Press B to go back | Esc to exit</Text>
+                <Text dimColor>{'Press B to go back | Esc to exit'}</Text>
             </Box>
         </Box>
     );

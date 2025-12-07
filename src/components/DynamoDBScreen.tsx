@@ -25,11 +25,18 @@ export const DynamoDBScreen: FC<DynamoDBScreenProps> = ({cachedData, onBack, onD
             region: getAwsRegion(),
         });
 
-        const command = new ListTablesCommand({});
-        const response = await dynamoClient.send(command);
-        const tableNames = response.TableNames || [];
+        const allTableNames = [];
+        let exclusiveStartTableName: string | undefined;
 
-        return tableNames.map((tableName) => ({
+        do {
+            const command = new ListTablesCommand({ExclusiveStartTableName: exclusiveStartTableName});
+            const response = await dynamoClient.send(command);
+            const tableNames = response.TableNames || [];
+            allTableNames.push(...tableNames);
+            exclusiveStartTableName = response.LastEvaluatedTableName;
+        } while (exclusiveStartTableName);
+
+        return allTableNames.map((tableName) => ({
             id  : tableName,
             name: tableName,
         }));
@@ -111,48 +118,48 @@ export const DynamoDBScreen: FC<DynamoDBScreenProps> = ({cachedData, onBack, onD
                 return (
                     <Box flexDirection='column'>
                         <Text>
-                            <Text dimColor>Table Name: </Text>
+                            <Text dimColor>{'Table Name: '}</Text>
                             {table.name}
                         </Text>
                         {hasMetadata ? (
                             <>
                                 <Text>
-                                    <Text dimColor>Status: </Text>
+                                    <Text dimColor>{'Status: '}</Text>
                                     {table.status}
                                 </Text>
                                 {table.billingMode && (
                                     <Text>
-                                        <Text dimColor>Billing Mode: </Text>
+                                        <Text dimColor>{'Billing Mode: '}</Text>
                                         {table.billingMode}
                                     </Text>
                                 )}
                                 {table.itemCount !== undefined && (
                                     <Text>
-                                        <Text dimColor>Item Count: </Text>
+                                        <Text dimColor>{'Item Count: '}</Text>
                                         {table.itemCount.toLocaleString()}
                                     </Text>
                                 )}
                                 {table.tableSize !== undefined && (
                                     <Text>
-                                        <Text dimColor>Table Size: </Text>
+                                        <Text dimColor>{'Table Size: '}</Text>
                                         {formatBytes(table.tableSize)}
                                     </Text>
                                 )}
                                 {table.readCapacity !== undefined && (
                                     <Text>
-                                        <Text dimColor>Read Capacity: </Text>
-                                        {table.readCapacity} units
+                                        <Text dimColor>{'Read Capacity: '}</Text>
+                                        {table.readCapacity}{' units'}
                                     </Text>
                                 )}
                                 {table.writeCapacity !== undefined && (
                                     <Text>
-                                        <Text dimColor>Write Capacity: </Text>
-                                        {table.writeCapacity} units
+                                        <Text dimColor>{'Write Capacity: '}</Text>
+                                        {table.writeCapacity}{' units'}
                                     </Text>
                                 )}
                                 {table.creationDate && (
                                     <Text>
-                                        <Text dimColor>Created: </Text>
+                                        <Text dimColor>{'Created: '}</Text>
                                         {table.creationDate.toLocaleString()}
                                     </Text>
                                 )}
@@ -161,7 +168,7 @@ export const DynamoDBScreen: FC<DynamoDBScreenProps> = ({cachedData, onBack, onD
                                         flexDirection='column'
                                         marginTop={1}
                                     >
-                                        <Text dimColor>Tags:</Text>
+                                        <Text dimColor>{'Tags:'}</Text>
                                         {table.tags.map((tag) => (
                                             <Text key={tag.Key}>
                                                 {'  '}

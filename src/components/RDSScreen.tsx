@@ -24,11 +24,18 @@ export const RDSScreen: FC<RDSScreenProps> = ({cachedData, onBack, onDataLoaded}
             region: getAwsRegion(),
         });
 
-        const command = new DescribeDBInstancesCommand({});
-        const response = await rdsClient.send(command);
-        const dbInstances = response.DBInstances || [];
+        const allInstances = [];
+        let marker: string | undefined;
 
-        return dbInstances.map((instance: DBInstance) => ({
+        do {
+            const command = new DescribeDBInstancesCommand({Marker: marker});
+            const response = await rdsClient.send(command);
+            const dbInstances = response.DBInstances || [];
+            allInstances.push(...dbInstances);
+            marker = response.Marker;
+        } while (marker);
+
+        return allInstances.map((instance: DBInstance) => ({
             allocatedStorage: instance.AllocatedStorage,
             availabilityZone: instance.AvailabilityZone,
             dbInstanceClass : instance.DBInstanceClass,
@@ -73,48 +80,48 @@ export const RDSScreen: FC<RDSScreenProps> = ({cachedData, onBack, onDataLoaded}
             renderMetadata={(instance) => (
                 <Box flexDirection='column'>
                     <Text>
-                        <Text dimColor>DB Instance: </Text>
+                        <Text dimColor>{'DB Instance: '}</Text>
                         {instance.name}
                     </Text>
                     {instance.status && (
                         <Text>
-                            <Text dimColor>Status: </Text>
+                            <Text dimColor>{'Status: '}</Text>
                             {instance.status}
                         </Text>
                     )}
                     {instance.engine && (
                         <Text>
-                            <Text dimColor>Engine: </Text>
+                            <Text dimColor>{'Engine: '}</Text>
                             {instance.engine} {instance.engineVersion}
                         </Text>
                     )}
                     {instance.dbInstanceClass && (
                         <Text>
-                            <Text dimColor>Instance Class: </Text>
+                            <Text dimColor>{'Instance Class: '}</Text>
                             {instance.dbInstanceClass}
                         </Text>
                     )}
                     {instance.allocatedStorage !== undefined && (
                         <Text>
-                            <Text dimColor>Storage: </Text>
+                            <Text dimColor>{'Storage: '}</Text>
                             {formatBytes(instance.allocatedStorage * 1024 * 1024 * 1024)}
                         </Text>
                     )}
                     {instance.availabilityZone && (
                         <Text>
-                            <Text dimColor>Availability Zone: </Text>
+                            <Text dimColor>{'Availability Zone: '}</Text>
                             {instance.availabilityZone}
                         </Text>
                     )}
                     {instance.multiAZ !== undefined && (
                         <Text>
-                            <Text dimColor>Multi-AZ: </Text>
+                            <Text dimColor>{'Multi-AZ: '}</Text>
                             {instance.multiAZ ? 'Yes' : 'No'}
                         </Text>
                     )}
                     {instance.endpoint && (
                         <Text>
-                            <Text dimColor>Endpoint: </Text>
+                            <Text dimColor>{'Endpoint: '}</Text>
                             {instance.endpoint}
                         </Text>
                     )}
@@ -123,7 +130,7 @@ export const RDSScreen: FC<RDSScreenProps> = ({cachedData, onBack, onDataLoaded}
                             flexDirection='column'
                             marginTop={1}
                         >
-                            <Text dimColor>Tags:</Text>
+                            <Text dimColor>{'Tags:'}</Text>
                             {instance.tags.map((tag) => (
                                 <Text key={tag.Key}>
                                     {'  '}

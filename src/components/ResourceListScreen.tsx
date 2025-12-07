@@ -17,7 +17,7 @@ interface ResourceListItem {
 
 interface ResourceListScreenProps<T> {
     error: null | string;
-    getItemDetails?: (item: T) => {color?: string; suffix?: string} | undefined;
+    getItemDetails?: (item: T) => undefined | {color?: string; suffix?: string};
     items: T[];
     loading: boolean;
     onBack?: () => void;
@@ -95,9 +95,9 @@ export function ResourceListScreen<T extends ResourceListItem>({
                 paddingX={2}
                 paddingY={1}
             >
-                <Text color='red'>Error: {error}</Text>
+                <Text color='red'>{'Error: '}{error}</Text>
                 <Box marginTop={1}>
-                    <Text dimColor>Press B to go back | Esc to exit</Text>
+                    <Text dimColor>{'Press B to go back | Esc to exit'}</Text>
                 </Box>
             </Box>
         );
@@ -119,12 +119,12 @@ export function ResourceListScreen<T extends ResourceListItem>({
                     bold
                     color={theme.colors.primary}
                 >
-                    {title} ({items.length})
+                    {title}{' ('}{items.length}{')'}
                 </Text>
             </Box>
 
             <Box marginBottom={1}>
-                <Text>Search: </Text>
+                <Text>{'Search: '}</Text>
                 <TextInput
                     onChange={setSearchQuery}
                     onSubmit={() => {
@@ -190,7 +190,7 @@ export function ResourceListScreen<T extends ResourceListItem>({
 
             <Box marginTop={1}>
                 <Text dimColor>
-                    ↑↓ Navigate
+                    {'↑↓ Navigate'}
                     {onSelect ? ' | Enter: Select' : ''}
                     {' | Esc: Exit'}
                 </Text>

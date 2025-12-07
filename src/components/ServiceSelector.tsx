@@ -45,53 +45,58 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({onSelect}) => {
             paddingY={1}
         >
             <Box
-                justifyContent='center'
                 marginBottom={1}
             >
                 <Text
                     bold
                     color={theme.colors.primary}
                 >
-                    AWS Service Selector
+                    {'AWS Service Selector'}
                 </Text>
             </Box>
 
-            <Box marginBottom={1}>
-                <Text>Search: </Text>
-                <TextInput
-                    onChange={setSearchQuery}
-                    onSubmit={() => {
-                        if (filteredServices[validSelectedIndex]) {
-                            onSelect(filteredServices[validSelectedIndex].name);
-                        }
-                    }}
-                    value={searchQuery}
-                />
-            </Box>
+            <Box
+                flexDirection='column'
+                paddingX={2}
+                paddingY={1}
+            >
+                <Box marginBottom={1}>
+                    <Text>{'Search: '}</Text>
+                    <TextInput
+                        onChange={setSearchQuery}
+                        onSubmit={() => {
+                            if (filteredServices[validSelectedIndex]) {
+                                onSelect(filteredServices[validSelectedIndex].name);
+                            }
+                        }}
+                        value={searchQuery}
+                    />
+                </Box>
 
-            <Box flexDirection='column'>
-                {filteredServices.length > 0 ? (
-                    filteredServices.map((service, index) => (
-                        <Box
-                            key={service.name}
-                            marginY={0}
-                        >
-                            <Text
-                                backgroundColor={index === validSelectedIndex ? theme.colors.highlight : undefined}
-                                bold={index === validSelectedIndex}
-                                color={index === validSelectedIndex ? 'black' : theme.colors.text}
+                <Box flexDirection='column'>
+                    {filteredServices.length > 0 ? (
+                        filteredServices.map((service, index) => (
+                            <Box
+                                key={service.name}
+                                marginY={0}
                             >
-                                {service.name}
-                            </Text>
-                        </Box>
-                    ))
-                ) : (
-                    <Text dimColor>No services found</Text>
-                )}
-            </Box>
+                                <Text
+                                    backgroundColor={index === validSelectedIndex ? theme.colors.highlight : undefined}
+                                    bold={index === validSelectedIndex}
+                                    color={index === validSelectedIndex ? 'black' : theme.colors.text}
+                                >
+                                    {service.name}
+                                </Text>
+                            </Box>
+                        ))
+                    ) : (
+                        <Text dimColor>{'No services found'}</Text>
+                    )}
+                </Box>
 
-            <Box marginTop={1}>
-                <Text dimColor>↑↓ Navigate | Enter: Select | Esc: Exit</Text>
+                <Box marginTop={1}>
+                    <Text dimColor>{'↑↓ Navigate | Enter: Select | Esc: Exit'}</Text>
+                </Box>
             </Box>
         </Box>
     );

@@ -25,11 +25,18 @@ export const SNSScreen: FC<SNSScreenProps> = ({cachedData, onBack, onDataLoaded}
             region: getAwsRegion(),
         });
 
-        const command = new ListTopicsCommand({});
-        const response = await snsClient.send(command);
-        const topicArns = response.Topics || [];
+        const allTopics = [];
+        let nextToken: string | undefined;
 
-        return topicArns.map((topic) => {
+        do {
+            const command = new ListTopicsCommand({NextToken: nextToken});
+            const response = await snsClient.send(command);
+            const topicArns = response.Topics || [];
+            allTopics.push(...topicArns);
+            nextToken = response.NextToken;
+        } while (nextToken);
+
+        return allTopics.map((topic) => {
             const arn = topic.TopicArn || '';
             const name = arn.split(':').pop() || 'unknown';
             return {
@@ -112,44 +119,44 @@ export const SNSScreen: FC<SNSScreenProps> = ({cachedData, onBack, onDataLoaded}
                 return (
                     <Box flexDirection='column'>
                         <Text>
-                            <Text dimColor>Topic Name: </Text>
+                            <Text dimColor>{'Topic Name: '}</Text>
                             {topic.name}
                         </Text>
                         {hasMetadata ? (
                             <>
                                 {topic.arn && (
                                     <Text>
-                                        <Text dimColor>ARN: </Text>
+                                        <Text dimColor>{'ARN: '}</Text>
                                         {topic.arn}
                                     </Text>
                                 )}
                                 {topic.displayName && (
                                     <Text>
-                                        <Text dimColor>Display Name: </Text>
+                                        <Text dimColor>{'Display Name: '}</Text>
                                         {topic.displayName}
                                     </Text>
                                 )}
                                 {topic.owner && (
                                     <Text>
-                                        <Text dimColor>Owner: </Text>
+                                        <Text dimColor>{'Owner: '}</Text>
                                         {topic.owner}
                                     </Text>
                                 )}
                                 {topic.subscriptionsConfirmed !== undefined && (
                                     <Text>
-                                        <Text dimColor>Confirmed Subscriptions: </Text>
+                                        <Text dimColor>{'Confirmed Subscriptions: '}</Text>
                                         {topic.subscriptionsConfirmed}
                                     </Text>
                                 )}
                                 {topic.subscriptionsPending !== undefined && (
                                     <Text>
-                                        <Text dimColor>Pending Subscriptions: </Text>
+                                        <Text dimColor>{'Pending Subscriptions: '}</Text>
                                         {topic.subscriptionsPending}
                                     </Text>
                                 )}
                                 {topic.subscriptionsDeleted !== undefined && (
                                     <Text>
-                                        <Text dimColor>Deleted Subscriptions: </Text>
+                                        <Text dimColor>{'Deleted Subscriptions: '}</Text>
                                         {topic.subscriptionsDeleted}
                                     </Text>
                                 )}
@@ -158,7 +165,7 @@ export const SNSScreen: FC<SNSScreenProps> = ({cachedData, onBack, onDataLoaded}
                                         flexDirection='column'
                                         marginTop={1}
                                     >
-                                        <Text dimColor>Tags:</Text>
+                                        <Text dimColor>{'Tags:'}</Text>
                                         {topic.tags.map((tag) => (
                                             <Text key={tag.Key}>
                                                 {'  '}

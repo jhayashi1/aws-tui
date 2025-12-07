@@ -90,10 +90,12 @@ const reactRules = {
     ...(eslintPluginRouter.configs['flat/recommended']?.rules ?? {}),
     'jsx-quotes'                          : [2, 'prefer-single'],
     'react-refresh/only-export-components': 0,
+    'react/jsx-child-element-spacing'     : 2,
     'react/jsx-closing-bracket-location'  : [2, 'line-aligned'],
     'react/jsx-curly-newline'             : [2, {multiline: 'consistent', singleline: 'consistent'}],
     'react/jsx-first-prop-new-line'       : [2, 'multiline'],
     'react/jsx-max-props-per-line'        : [2, {maximum: 1, when: 'always'}],
+    'react/jsx-no-literals'               : [2],
     'react/jsx-tag-spacing'               : [2,
         {
             afterOpening     : 'never',

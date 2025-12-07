@@ -6,7 +6,7 @@ import {
 } from '@aws-sdk/client-lambda';
 import {Spinner} from '@inkjs/ui';
 import {Box, Text} from 'ink';
-import React, {type FC, useCallback, useState} from 'react';
+import {type FC, useCallback, useState} from 'react';
 
 import {useCachedResource} from '../hooks/useCachedResource.js';
 import {theme} from '../theme.js';
@@ -25,11 +25,18 @@ export const LambdaScreen: FC<LambdaScreenProps> = ({cachedData, onBack, onDataL
             region: getAwsRegion(),
         });
 
-        const command = new ListFunctionsCommand({});
-        const response = await lambdaClient.send(command);
-        const functions = response.Functions || [];
+        const allFunctions = [];
+        let marker: string | undefined;
 
-        return functions.map((func) => ({
+        do {
+            const command = new ListFunctionsCommand({Marker: marker});
+            const response = await lambdaClient.send(command);
+            const functions = response.Functions || [];
+            allFunctions.push(...functions);
+            marker = response.NextMarker;
+        } while (marker);
+
+        return allFunctions.map((func) => ({
             description: func.Description,
             id         : func.FunctionArn || '',
             name       : func.FunctionName || '',
@@ -118,18 +125,18 @@ export const LambdaScreen: FC<LambdaScreenProps> = ({cachedData, onBack, onDataL
                 return (
                     <Box flexDirection='column'>
                         <Text>
-                            <Text dimColor>Name: </Text>
+                            <Text dimColor>{'Name: '}</Text>
                             {func.name}
                         </Text>
                         {func.description && (
                             <Text>
-                                <Text dimColor>Description: </Text>
+                                <Text dimColor>{'Description: '}</Text>
                                 {func.description}
                             </Text>
                         )}
                         {func.runtime && (
                             <Text>
-                                <Text dimColor>Runtime: </Text>
+                                <Text dimColor>{'Runtime: '}</Text>
                                 {func.runtime}
                             </Text>
                         )}
@@ -137,37 +144,37 @@ export const LambdaScreen: FC<LambdaScreenProps> = ({cachedData, onBack, onDataL
                             <>
                                 {func.handler && (
                                     <Text>
-                                        <Text dimColor>Handler: </Text>
+                                        <Text dimColor>{'Handler: '}</Text>
                                         {func.handler}
                                     </Text>
                                 )}
                                 {func.memorySize && (
                                     <Text>
-                                        <Text dimColor>Memory: </Text>
-                                        {func.memorySize} MB
+                                        <Text dimColor>{'Memory: '}</Text>
+                                        {func.memorySize}{' MB'}
                                     </Text>
                                 )}
                                 {func.timeout && (
                                     <Text>
-                                        <Text dimColor>Timeout: </Text>
-                                        {func.timeout} seconds
+                                        <Text dimColor>{'Timeout: '}</Text>
+                                        {func.timeout}{' seconds'}
                                     </Text>
                                 )}
                                 {func.codeSize && (
                                     <Text>
-                                        <Text dimColor>Code Size: </Text>
+                                        <Text dimColor>{'Code Size: '}</Text>
                                         {formatBytes(func.codeSize)}
                                     </Text>
                                 )}
                                 {func.architectures && func.architectures.length > 0 && (
                                     <Text>
-                                        <Text dimColor>Architecture: </Text>
+                                        <Text dimColor>{'Architecture: '}</Text>
                                         {func.architectures.join(', ')}
                                     </Text>
                                 )}
                                 {func.lastModified && (
                                     <Text>
-                                        <Text dimColor>Last Modified: </Text>
+                                        <Text dimColor>{'Last Modified: '}</Text>
                                         {new Date(func.lastModified).toLocaleString()}
                                     </Text>
                                 )}
@@ -176,7 +183,7 @@ export const LambdaScreen: FC<LambdaScreenProps> = ({cachedData, onBack, onDataL
                                         flexDirection='column'
                                         marginTop={1}
                                     >
-                                        <Text dimColor>Environment Variables:</Text>
+                                        <Text dimColor>{'Environment Variables:'}</Text>
                                         {Object.entries(func.environment).slice(0, 5).map(([key, value]) => (
                                             <Text key={key}>
                                                 {'  '}
@@ -187,8 +194,7 @@ export const LambdaScreen: FC<LambdaScreenProps> = ({cachedData, onBack, onDataL
                                         ))}
                                         {Object.keys(func.environment).length > 5 && (
                                             <Text dimColor>
-                                                {'  '}
-                                                ... and {Object.keys(func.environment).length - 5} more
+                                                {'  ... and '}{Object.keys(func.environment).length - 5}{' more'}
                                             </Text>
                                         )}
                                     </Box>
@@ -198,7 +204,7 @@ export const LambdaScreen: FC<LambdaScreenProps> = ({cachedData, onBack, onDataL
                                         flexDirection='column'
                                         marginTop={1}
                                     >
-                                        <Text dimColor>Tags:</Text>
+                                        <Text dimColor>{'Tags:'}</Text>
                                         {Object.entries(func.tags).map(([key, value]) => (
                                             <Text key={key}>
                                                 {'  '}

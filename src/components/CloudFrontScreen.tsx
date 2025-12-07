@@ -4,7 +4,6 @@ import {
     ListDistributionsCommand,
     ListTagsForResourceCommand
 } from '@aws-sdk/client-cloudfront';
-import {Spinner} from '@inkjs/ui';
 import {Box, Text} from 'ink';
 import React, {type FC, useCallback, useState} from 'react';
 
@@ -25,11 +24,18 @@ export const CloudFrontScreen: FC<CloudFrontScreenProps> = ({cachedData, onBack,
             region: getAwsRegion(),
         });
 
-        const command = new ListDistributionsCommand({});
-        const response = await cloudFrontClient.send(command);
-        const items = response.DistributionList?.Items || [];
+        const allDistributions = [];
+        let marker: string | undefined;
 
-        return items.map((dist: DistributionSummary) => ({
+        do {
+            const command = new ListDistributionsCommand({Marker: marker});
+            const response = await cloudFrontClient.send(command);
+            const items = response.DistributionList?.Items || [];
+            allDistributions.push(...items);
+            marker = response.DistributionList?.NextMarker;
+        } while (marker);
+
+        return allDistributions.map((dist: DistributionSummary) => ({
             aliases   : dist.Aliases?.Items,
             comment   : dist.Comment,
             domainName: dist.DomainName,
@@ -111,30 +117,30 @@ export const CloudFrontScreen: FC<CloudFrontScreenProps> = ({cachedData, onBack,
             renderMetadata={(distribution) => (
                 <Box flexDirection='column'>
                     <Text>
-                        <Text dimColor>ID: </Text>
+                        <Text dimColor>{'ID: '}</Text>
                         {distribution.id}
                     </Text>
                     {distribution.domainName && (
                         <Text>
-                            <Text dimColor>Domain: </Text>
+                            <Text dimColor>{'Domain: '}</Text>
                             {distribution.domainName}
                         </Text>
                     )}
                     {distribution.status && (
                         <Text>
-                            <Text dimColor>Status: </Text>
+                            <Text dimColor>{'Status: '}</Text>
                             {distribution.status}
                         </Text>
                     )}
                     {distribution.enabled !== undefined && (
                         <Text>
-                            <Text dimColor>Enabled: </Text>
+                            <Text dimColor>{'Enabled: '}</Text>
                             {distribution.enabled ? 'Yes' : 'No'}
                         </Text>
                     )}
                     {distribution.priceClass && (
                         <Text>
-                            <Text dimColor>Price Class: </Text>
+                            <Text dimColor>{'Price Class: '}</Text>
                             {distribution.priceClass}
                         </Text>
                     )}
@@ -143,7 +149,7 @@ export const CloudFrontScreen: FC<CloudFrontScreenProps> = ({cachedData, onBack,
                             flexDirection='column'
                             marginTop={1}
                         >
-                            <Text dimColor>Aliases:</Text>
+                            <Text dimColor>{'Aliases:'}</Text>
                             {distribution.aliases.map((alias) => (
                                 <Text key={alias}>
                                     {'  '}
@@ -154,7 +160,7 @@ export const CloudFrontScreen: FC<CloudFrontScreenProps> = ({cachedData, onBack,
                     )}
                     {distribution.comment && (
                         <Text>
-                            <Text dimColor>Comment: </Text>
+                            <Text dimColor>{'Comment: '}</Text>
                             {distribution.comment}
                         </Text>
                     )}
@@ -163,7 +169,7 @@ export const CloudFrontScreen: FC<CloudFrontScreenProps> = ({cachedData, onBack,
                             flexDirection='column'
                             marginTop={1}
                         >
-                            <Text dimColor>Tags:</Text>
+                            <Text dimColor>{'Tags:'}</Text>
                             {distribution.tags.map((tag) => (
                                 <Text key={tag.Key}>
                                     {'  '}
