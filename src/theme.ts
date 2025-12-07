@@ -3,6 +3,7 @@ export const theme = {
         dim      : 'gray',
         highlight: 'cyan',
         primary  : '#FF9900',
+        selected : 'blue',
         success  : 'green',
         text     : 'white',
     },

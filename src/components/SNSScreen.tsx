@@ -113,7 +113,7 @@ export const SNSScreen: FC<SNSScreenProps> = ({cachedData, onBack, onDataLoaded}
             loading={loading}
             onBack={onBack}
             onItemHovered={(topic) => {
-                scheduleFetch(() => fetchTopicMetadata(topic.arn || topic.id));
+                scheduleFetch(async () => await fetchTopicMetadata(topic.arn || topic.id));
             }}
             renderMetadata={(topic) => {
                 const hasMetadata = topic.displayName !== undefined;

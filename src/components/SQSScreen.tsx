@@ -119,7 +119,7 @@ export const SQSScreen: FC<SQSScreenProps> = ({cachedData, onBack, onDataLoaded}
             loading={loading}
             onBack={onBack}
             onItemHovered={(queue) => {
-                scheduleFetch(() => fetchQueueMetadata(queue.id));
+                scheduleFetch(async () => await fetchQueueMetadata(queue.id));
             }}
             renderMetadata={(queue) => {
                 const hasMetadata = queue.queueArn !== undefined;

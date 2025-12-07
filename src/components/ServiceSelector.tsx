@@ -81,9 +81,8 @@ export const ServiceSelector: FC<ServiceSelectorProps> = ({onSelect}) => {
                                 marginY={0}
                             >
                                 <Text
-                                    backgroundColor={index === validSelectedIndex ? theme.colors.highlight : undefined}
                                     bold={index === validSelectedIndex}
-                                    color={index === validSelectedIndex ? 'black' : theme.colors.text}
+                                    color={index === validSelectedIndex ? theme.colors.selected : theme.colors.text}
                                 >
                                     {service.name}
                                 </Text>

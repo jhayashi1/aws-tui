@@ -112,7 +112,6 @@ export function ResourceListScreen<T extends ResourceListItem>({
             paddingY={1}
         >
             <Box
-                justifyContent='center'
                 marginBottom={1}
             >
                 <Text
@@ -154,9 +153,8 @@ export function ResourceListScreen<T extends ResourceListItem>({
                                 marginY={0}
                             >
                                 <Text
-                                    backgroundColor={isSelected ? theme.colors.highlight : undefined}
                                     bold={isSelected}
-                                    color={isSelected ? 'black' : theme.colors.text}
+                                    color={isSelected ? theme.colors.selected : theme.colors.text}
                                 >
                                     {item.name}
                                     {details?.suffix && (

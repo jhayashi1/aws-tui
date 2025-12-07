@@ -114,7 +114,7 @@ export const CloudFrontScreen: FC<CloudFrontScreenProps> = ({cachedData, onBack,
             loading={loading}
             onBack={onBack}
             onItemHovered={(distribution) => {
-                scheduleFetch(() => fetchDistributionMetadata(distribution.id));
+                scheduleFetch(async () => await fetchDistributionMetadata(distribution.id));
             }}
             renderMetadata={(distribution) => (
                 <Box flexDirection='column'>
