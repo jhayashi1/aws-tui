@@ -1,53 +1,57 @@
 {
-    "name": "aws-tui",
-    "version": "0.0.1",
-    "description": "",
-    "main": "index.tsx",
-    "type": "module",
-    "packageManager": "pnpm@10.23.0+sha512.21c4e5698002ade97e4efe8b8b4a89a8de3c85a37919f957e7a0f30f38fbc5bbdd05980ffe29179b2fb6e6e691242e098d945d1601772cad0fef5fb6411e2a4b",
-    "scripts": {
-        "start": "tsx src/index.tsx",
-        "build": "tsc",
-        "lint": "eslint .",
-        "types": "tsc --noEmit"
-    },
-    "engines": {
-        "node": "24.10.0"
-    },
-    "author": "jhayashi1",
-    "dependencies": {
-        "@aws-sdk/client-cloudfront": "^3.940.0",
-        "@aws-sdk/client-dynamodb": "^3.940.0",
-        "@aws-sdk/client-ec2": "^3.940.0",
-        "@aws-sdk/client-lambda": "^3.940.0",
-        "@aws-sdk/client-rds": "^3.940.0",
-        "@aws-sdk/client-s3": "^3.940.0",
-        "@aws-sdk/client-sns": "^3.940.0",
-        "@aws-sdk/client-sqs": "^3.940.0",
-        "@inkjs/ui": "^2.0.0",
-        "ink": "^5.1.0",
-        "ink-text-input": "^6.0.0",
-        "react": "^18.3.1"
-    },
-    "devDependencies": {
-        "@eslint/js": "9.39.1",
-        "@stylistic/eslint-plugin": "5.6.1",
-        "@tanstack/eslint-plugin-query": "5.91.2",
-        "@tanstack/eslint-plugin-router": "1.139.0",
-        "@types/node": "24.10.1",
-        "@types/react": "18.3.1",
-        "@typescript-eslint/eslint-plugin": "8.48.0",
-        "@typescript-eslint/parser": "8.48.0",
-        "esbuild": "0.27.0",
-        "eslint": "9.39.1",
-        "eslint-config-react-app": "7.0.1",
-        "eslint-plugin-import": "2.32.0",
-        "eslint-plugin-perfectionist": "4.15.1",
-        "eslint-plugin-react": "7.37.5",
-        "eslint-plugin-react-hooks": "7.0.1",
-        "eslint-plugin-react-refresh": "0.4.24",
-        "globals": "16.5.0",
-        "tsx": "^4.20.6",
-        "typescript": "5.9.3"
-    }
+  "name": "aws-tui",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.tsx",
+  "type": "module",
+  "packageManager": "pnpm@10.24.0+sha512.01ff8ae71b4419903b65c60fb2dc9d34cf8bb6e06d03bde112ef38f7a34d6904c424ba66bea5cdcf12890230bf39f9580473140ed9c946fef328b6e5238a345a",
+  "scripts": {
+    "start": "tsx src/index.tsx",
+    "build": "tsc",
+    "lint": "eslint .",
+    "types": "tsc --noEmit",
+    "prepare": "husky"
+  },
+  "engines": {
+    "node": "24.10.0"
+  },
+  "author": "jhayashi1",
+  "dependencies": {
+    "@aws-sdk/client-cloudfront": "^3.940.0",
+    "@aws-sdk/client-dynamodb": "^3.940.0",
+    "@aws-sdk/client-ec2": "^3.940.0",
+    "@aws-sdk/client-lambda": "^3.940.0",
+    "@aws-sdk/client-rds": "^3.940.0",
+    "@aws-sdk/client-s3": "^3.940.0",
+    "@aws-sdk/client-sns": "^3.940.0",
+    "@aws-sdk/client-sqs": "^3.940.0",
+    "@inkjs/ui": "^2.0.0",
+    "ink": "^5.1.0",
+    "ink-text-input": "^6.0.0",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.2.0",
+    "@commitlint/config-conventional": "^20.2.0",
+    "@eslint/js": "9.39.1",
+    "@stylistic/eslint-plugin": "5.6.1",
+    "@tanstack/eslint-plugin-query": "5.91.2",
+    "@tanstack/eslint-plugin-router": "1.139.0",
+    "@types/node": "24.10.1",
+    "@types/react": "18.3.1",
+    "@typescript-eslint/eslint-plugin": "8.48.0",
+    "@typescript-eslint/parser": "8.48.0",
+    "esbuild": "0.27.0",
+    "eslint": "9.39.1",
+    "eslint-config-react-app": "7.0.1",
+    "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-perfectionist": "4.15.1",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.0.1",
+    "eslint-plugin-react-refresh": "0.4.24",
+    "globals": "16.5.0",
+    "husky": "^9.1.7",
+    "tsx": "^4.20.6",
+    "typescript": "5.9.3"
+  }
 }
