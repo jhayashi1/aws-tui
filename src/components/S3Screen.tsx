@@ -113,7 +113,7 @@ export const S3Screen: FC<S3ScreenProps> = ({cachedData, onBack, onDataLoaded}) 
             loading={loading}
             onBack={onBack}
             onItemHovered={(bucket) => {
-                scheduleFetch(() => fetchBucketMetadata(bucket.name));
+                scheduleFetch(async () => await fetchBucketMetadata(bucket.name));
             }}
             renderMetadata={(bucket) => {
                 const hasMetadata = bucket.location !== undefined;

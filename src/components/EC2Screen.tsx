@@ -135,7 +135,7 @@ export const EC2Screen: FC<EC2ScreenProps> = ({cachedData, onBack, onDataLoaded}
             loading={loading}
             onBack={onBack}
             onItemHovered={(instance) => {
-                scheduleFetch(() => fetchInstanceMetadata(instance.id));
+                scheduleFetch(async () => await fetchInstanceMetadata(instance.id));
             }}
             renderMetadata={(instance) => {
                 const hasMetadata = instance.availabilityZone !== undefined;

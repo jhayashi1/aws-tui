@@ -112,7 +112,7 @@ export const DynamoDBScreen: FC<DynamoDBScreenProps> = ({cachedData, onBack, onD
             loading={loading}
             onBack={onBack}
             onItemHovered={(table) => {
-                scheduleFetch(() => fetchTableMetadata(table.name));
+                scheduleFetch(async () => await fetchTableMetadata(table.name));
             }}
             renderMetadata={(table) => {
                 const hasMetadata = table.status !== undefined;

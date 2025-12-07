@@ -1,6 +1,6 @@
 import {Box, Text, useInput} from 'ink';
 import TextInput from 'ink-text-input';
-import React, {type FC, useState} from 'react';
+import {type FC, useState} from 'react';
 
 import {AWS_SERVICES} from '../constants/awsServices.js';
 import {theme} from '../theme.js';
