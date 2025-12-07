@@ -11,6 +11,7 @@ import {Box, Text} from 'ink';
 import React, {type FC, useCallback, useState} from 'react';
 
 import {useCachedResource} from '../hooks/useCachedResource.js';
+import {useMetadataFetch} from '../hooks/useMetadataFetch.js';
 import {theme} from '../theme.js';
 import {type ServiceScreenProps} from '../types/common.js';
 import {type S3Bucket} from '../types/resources.js';
@@ -26,6 +27,7 @@ type S3ScreenProps = ServiceScreenProps<S3Bucket>;
 
 export const S3Screen: FC<S3ScreenProps> = ({cachedData, onBack, onDataLoaded}) => {
     const [buckets, setBuckets] = useState<S3Bucket[]>(cachedData?.data || []);
+    const {scheduleFetch} = useMetadataFetch();
 
     const fetchBuckets = useCallback(async (): Promise<S3Bucket[]> => {
         const s3Client = new S3Client({
@@ -111,7 +113,7 @@ export const S3Screen: FC<S3ScreenProps> = ({cachedData, onBack, onDataLoaded}) 
             loading={loading}
             onBack={onBack}
             onItemHovered={(bucket) => {
-                fetchBucketMetadata(bucket.name);
+                scheduleFetch(() => fetchBucketMetadata(bucket.name));
             }}
             renderMetadata={(bucket) => {
                 const hasMetadata = bucket.location !== undefined;

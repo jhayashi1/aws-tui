@@ -110,7 +110,7 @@ export default [
         files          : ['**/*.js', '**/*.mjs'],
         ignores        : ['dist/**', 'node_modules/**'],
         languageOptions: {
-            globals      : {...globals.node, ...globals.es2021, ...globals.browser},
+            globals      : {...globals.node, ...globals.es2021, ...globals.browser, ...globals.nodeBuiltin},
             parserOptions: {ecmaVersion: 'latest', sourceType: 'module'},
         },
         plugins: {

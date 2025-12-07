@@ -8,6 +8,7 @@ import {Box, Text} from 'ink';
 import React, {type FC, useCallback, useState} from 'react';
 
 import {useCachedResource} from '../hooks/useCachedResource.js';
+import {useMetadataFetch} from '../hooks/useMetadataFetch.js';
 import {theme} from '../theme.js';
 import {type ServiceScreenProps} from '../types/common.js';
 import {type EC2Instance} from '../types/resources.js';
@@ -18,6 +19,7 @@ type EC2ScreenProps = ServiceScreenProps<EC2Instance>;
 
 export const EC2Screen: FC<EC2ScreenProps> = ({cachedData, onBack, onDataLoaded}) => {
     const [instances, setInstances] = useState<EC2Instance[]>(cachedData?.data || []);
+    const {scheduleFetch} = useMetadataFetch();
 
     const fetchInstances = useCallback(async (): Promise<EC2Instance[]> => {
         const ec2Client = new EC2Client({
@@ -133,7 +135,7 @@ export const EC2Screen: FC<EC2ScreenProps> = ({cachedData, onBack, onDataLoaded}
             loading={loading}
             onBack={onBack}
             onItemHovered={(instance) => {
-                fetchInstanceMetadata(instance.id);
+                scheduleFetch(() => fetchInstanceMetadata(instance.id));
             }}
             renderMetadata={(instance) => {
                 const hasMetadata = instance.availabilityZone !== undefined;

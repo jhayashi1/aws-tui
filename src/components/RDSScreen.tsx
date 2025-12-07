@@ -8,6 +8,7 @@ import {Box, Text} from 'ink';
 import React, {type FC, useCallback, useState} from 'react';
 
 import {useCachedResource} from '../hooks/useCachedResource.js';
+import {useMetadataFetch} from '../hooks/useMetadataFetch.js';
 import {theme} from '../theme.js';
 import {type ServiceScreenProps} from '../types/common.js';
 import {type RDSInstance} from '../types/resources.js';
@@ -18,6 +19,7 @@ type RDSScreenProps = ServiceScreenProps<RDSInstance>;
 
 export const RDSScreen: FC<RDSScreenProps> = ({cachedData, onBack, onDataLoaded}) => {
     const [instances, setInstances] = useState<RDSInstance[]>(cachedData?.data || []);
+    const {scheduleFetch} = useMetadataFetch();
 
     const fetchInstances = useCallback(async (): Promise<RDSInstance[]> => {
         const rdsClient = new RDSClient({

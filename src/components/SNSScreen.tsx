@@ -9,6 +9,7 @@ import {Box, Text} from 'ink';
 import React, {type FC, useCallback, useState} from 'react';
 
 import {useCachedResource} from '../hooks/useCachedResource.js';
+import {useMetadataFetch} from '../hooks/useMetadataFetch.js';
 import {theme} from '../theme.js';
 import {type ServiceScreenProps} from '../types/common.js';
 import {type SNSTopic} from '../types/resources.js';
@@ -19,6 +20,7 @@ type SNSScreenProps = ServiceScreenProps<SNSTopic>;
 
 export const SNSScreen: FC<SNSScreenProps> = ({cachedData, onBack, onDataLoaded}) => {
     const [topics, setTopics] = useState<SNSTopic[]>(cachedData?.data || []);
+    const {scheduleFetch} = useMetadataFetch();
 
     const fetchTopics = useCallback(async (): Promise<SNSTopic[]> => {
         const snsClient = new SNSClient({
@@ -111,7 +113,7 @@ export const SNSScreen: FC<SNSScreenProps> = ({cachedData, onBack, onDataLoaded}
             loading={loading}
             onBack={onBack}
             onItemHovered={(topic) => {
-                fetchTopicMetadata(topic.arn || topic.id);
+                scheduleFetch(() => fetchTopicMetadata(topic.arn || topic.id));
             }}
             renderMetadata={(topic) => {
                 const hasMetadata = topic.displayName !== undefined;

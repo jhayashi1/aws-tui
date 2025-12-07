@@ -9,6 +9,7 @@ import {Box, Text} from 'ink';
 import React, {type FC, useCallback, useState} from 'react';
 
 import {useCachedResource} from '../hooks/useCachedResource.js';
+import {useMetadataFetch} from '../hooks/useMetadataFetch.js';
 import {theme} from '../theme.js';
 import {type ServiceScreenProps} from '../types/common.js';
 import {type SQSQueue} from '../types/resources.js';
@@ -19,6 +20,7 @@ type SQSScreenProps = ServiceScreenProps<SQSQueue>;
 
 export const SQSScreen: FC<SQSScreenProps> = ({cachedData, onBack, onDataLoaded}) => {
     const [queues, setQueues] = useState<SQSQueue[]>(cachedData?.data || []);
+    const {scheduleFetch} = useMetadataFetch();
 
     const fetchQueues = useCallback(async (): Promise<SQSQueue[]> => {
         const sqsClient = new SQSClient({
@@ -117,7 +119,7 @@ export const SQSScreen: FC<SQSScreenProps> = ({cachedData, onBack, onDataLoaded}
             loading={loading}
             onBack={onBack}
             onItemHovered={(queue) => {
-                fetchQueueMetadata(queue.id);
+                scheduleFetch(() => fetchQueueMetadata(queue.id));
             }}
             renderMetadata={(queue) => {
                 const hasMetadata = queue.queueArn !== undefined;

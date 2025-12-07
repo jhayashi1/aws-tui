@@ -9,6 +9,7 @@ import {Box, Text} from 'ink';
 import React, {type FC, useCallback, useState} from 'react';
 
 import {useCachedResource} from '../hooks/useCachedResource.js';
+import {useMetadataFetch} from '../hooks/useMetadataFetch.js';
 import {theme} from '../theme.js';
 import {type ServiceScreenProps} from '../types/common.js';
 import {type DynamoDBTable} from '../types/resources.js';
@@ -19,6 +20,7 @@ type DynamoDBScreenProps = ServiceScreenProps<DynamoDBTable>;
 
 export const DynamoDBScreen: FC<DynamoDBScreenProps> = ({cachedData, onBack, onDataLoaded}) => {
     const [tables, setTables] = useState<DynamoDBTable[]>(cachedData?.data || []);
+    const {scheduleFetch} = useMetadataFetch();
 
     const fetchTables = useCallback(async (): Promise<DynamoDBTable[]> => {
         const dynamoClient = new DynamoDBClient({
@@ -110,7 +112,7 @@ export const DynamoDBScreen: FC<DynamoDBScreenProps> = ({cachedData, onBack, onD
             loading={loading}
             onBack={onBack}
             onItemHovered={(table) => {
-                fetchTableMetadata(table.name);
+                scheduleFetch(() => fetchTableMetadata(table.name));
             }}
             renderMetadata={(table) => {
                 const hasMetadata = table.status !== undefined;

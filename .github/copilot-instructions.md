@@ -1,0 +1,1 @@
+1. Don't worry about linting errors unless the user explicitly asks you to fix them

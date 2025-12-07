@@ -8,6 +8,7 @@ import {Box, Text} from 'ink';
 import React, {type FC, useCallback, useState} from 'react';
 
 import {useCachedResource} from '../hooks/useCachedResource.js';
+import {useMetadataFetch} from '../hooks/useMetadataFetch.js';
 import {theme} from '../theme.js';
 import {type ServiceScreenProps} from '../types/common.js';
 import {type CloudFrontDistribution} from '../types/resources.js';
@@ -18,6 +19,7 @@ type CloudFrontScreenProps = ServiceScreenProps<CloudFrontDistribution>;
 
 export const CloudFrontScreen: FC<CloudFrontScreenProps> = ({cachedData, onBack, onDataLoaded}) => {
     const [distributions, setDistributions] = useState<CloudFrontDistribution[]>(cachedData?.data || []);
+    const {scheduleFetch} = useMetadataFetch();
 
     const fetchDistributions = useCallback(async (): Promise<CloudFrontDistribution[]> => {
         const cloudFrontClient = new CloudFrontClient({
@@ -112,7 +114,7 @@ export const CloudFrontScreen: FC<CloudFrontScreenProps> = ({cachedData, onBack,
             loading={loading}
             onBack={onBack}
             onItemHovered={(distribution) => {
-                fetchDistributionMetadata(distribution.id);
+                scheduleFetch(() => fetchDistributionMetadata(distribution.id));
             }}
             renderMetadata={(distribution) => (
                 <Box flexDirection='column'>
